@@ -55,25 +55,27 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({ apartment }) => {
       }}
       onClick={handleCardClick}
     >
-      <CardMedia
-        component="img"
-        height="200"
-        image={apartment.images[0] || 'https://via.placeholder.com/400x200?text=Imóvel+aMORA'}
-        alt={apartment.title}
-        sx={{ objectFit: 'cover' }}
-      />
-      
-      <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
-        <Chip
-          icon={apartment.isPublic ? <PublicIcon /> : <PrivateIcon />}
-          label={apartment.isPublic ? 'Público' : 'Privado'}
-          size="small"
-          sx={{
-            bgcolor: apartment.isPublic ? theme.palette.primary.main : theme.palette.secondary.main,
-            color: 'white',
-            fontWeight: 600,
-          }}
+      <Box sx={{ position: 'relative' }}>
+        <CardMedia
+          component="img"
+          height="200"
+          image={apartment.images[0] || 'https://via.placeholder.com/400x200?text=Imóvel+aMORA'}
+          alt={apartment.title}
+          sx={{ objectFit: 'cover' }}
         />
+        
+        <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
+          <Chip
+            icon={apartment.isPublic ? <PublicIcon /> : <PrivateIcon />}
+            label={apartment.isPublic ? 'Público' : 'Privado'}
+            size="small"
+            sx={{
+              bgcolor: apartment.isPublic ? theme.palette.primary.main : theme.palette.secondary.main,
+              color: 'white',
+              fontWeight: 600,
+            }}
+          />
+        </Box>
       </Box>
 
       <CardContent sx={{ flexGrow: 1, p: 2 }}>
