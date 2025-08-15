@@ -121,9 +121,11 @@ const Filters: React.FC<FiltersProps> = ({
     <Paper
       sx={{
         p: 2,
-        mb: 3,
+        height: 'fit-content',
         borderRadius: 2,
         border: `1px solid ${theme.palette.divider}`,
+        position: 'sticky',
+        top: 20,
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -153,7 +155,7 @@ const Filters: React.FC<FiltersProps> = ({
           </Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 3 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {/* Preço */}
             <Box>
               <Typography variant="subtitle2" gutterBottom>

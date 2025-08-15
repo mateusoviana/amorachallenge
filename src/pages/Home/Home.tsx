@@ -236,7 +236,34 @@ const Home: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
+      <Box 
+        sx={{ 
+          mb: 4,
+          p: 4,
+          borderRadius: 3,
+          background: `linear-gradient(180deg, 
+            ${theme.palette.primary.main}15 0%, 
+            ${theme.palette.primary.main}08 30%, 
+            ${theme.palette.primary.main}04 60%, 
+            transparent 100%)`,
+          border: `1px solid ${theme.palette.primary.main}20`,
+          position: 'relative',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderRadius: 3,
+            background: `linear-gradient(180deg, 
+              ${theme.palette.secondary.main}10 0%, 
+              ${theme.palette.secondary.main}05 40%, 
+              transparent 100%)`,
+            pointerEvents: 'none',
+          }
+        }}
+      >
         <Typography
           variant="h3"
           component="h1"
@@ -245,6 +272,8 @@ const Home: React.FC = () => {
             color: theme.palette.secondary.main,
             textAlign: 'center',
             mb: 2,
+            position: 'relative',
+            zIndex: 1,
           }}
         >
           Encontre seu Imóvel Ideal
@@ -252,60 +281,74 @@ const Home: React.FC = () => {
         <Typography
           variant="h6"
           color="text.secondary"
-          sx={{ textAlign: 'center', maxWidth: 600, mx: 'auto' }}
+          sx={{ 
+            textAlign: 'center', 
+            maxWidth: 600, 
+            mx: 'auto',
+            position: 'relative',
+            zIndex: 1,
+          }}
         >
           Explore milhares de apartamentos e casas disponíveis para compra. 
           Compare opções e encontre o lugar perfeito para você.
         </Typography>
       </Box>
 
-      <Filters
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        groups={groups}
-        onClearFilters={handleClearFilters}
-      />
+      <Grid container spacing={3}>
+        {/* Filtros - Lado Esquerdo */}
+        <Grid item xs={12} md={3}>
+          <Filters
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            groups={groups}
+            onClearFilters={handleClearFilters}
+          />
+        </Grid>
 
-      {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress size={60} />
-        </Box>
-      )}
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      {!loading && !error && (
-        <>
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6" color="text.secondary">
-              {filteredApartments.length} imóvel{filteredApartments.length !== 1 ? 'es' : ''} encontrado{filteredApartments.length !== 1 ? 's' : ''}
-            </Typography>
-          </Box>
-
-          {filteredApartments.length === 0 ? (
-            <Paper sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                Nenhum imóvel encontrado
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Tente ajustar os filtros ou adicionar novos imóveis.
-              </Typography>
-            </Paper>
-          ) : (
-            <Grid container spacing={3}>
-              {filteredApartments.map((apartment) => (
-                <Grid item xs={12} sm={6} md={4} lg={3} key={apartment.id}>
-                  <ApartmentCard apartment={apartment} />
-                </Grid>
-              ))}
-            </Grid>
+        {/* Cards - Lado Direito */}
+        <Grid item xs={12} md={9}>
+          {loading && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress size={60} />
+            </Box>
           )}
-        </>
-      )}
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {error}
+            </Alert>
+          )}
+
+          {!loading && !error && (
+            <>
+              <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h6" color="text.secondary">
+                  {filteredApartments.length} imóvel{filteredApartments.length !== 1 ? 'es' : ''} encontrado{filteredApartments.length !== 1 ? 's' : ''}
+                </Typography>
+              </Box>
+
+              {filteredApartments.length === 0 ? (
+                <Paper sx={{ p: 4, textAlign: 'center' }}>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    Nenhum imóvel encontrado
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    Tente ajustar os filtros ou adicionar novos imóveis.
+                  </Typography>
+                </Paper>
+              ) : (
+                <Grid container spacing={3}>
+                  {filteredApartments.map((apartment) => (
+                    <Grid item xs={12} sm={6} lg={4} key={apartment.id}>
+                      <ApartmentCard apartment={apartment} />
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </>
+          )}
+        </Grid>
+      </Grid>
     </Container>
   );
 };
