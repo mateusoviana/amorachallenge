@@ -10,6 +10,7 @@ import ApartmentDetail from './pages/ApartmentDetail/ApartmentDetail';
 import AddApartment from './pages/AddApartment/AddApartment';
 import Profile from './pages/Profile/Profile';
 import Dashboard from './pages/Dashboard/Dashboard';
+import Groups from './pages/Groups/Groups';
 import Login from './pages/Login/Login';
 
 const App: React.FC = () => {
@@ -27,6 +28,7 @@ const App: React.FC = () => {
                 <Route path="/add-apartment" element={<AddApartment />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/groups" element={<Groups />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

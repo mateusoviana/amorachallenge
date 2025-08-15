@@ -18,6 +18,7 @@ import {
   AccountCircle as AccountCircleIcon,
   Logout as LogoutIcon,
   Dashboard as DashboardIcon,
+  Group as GroupIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -85,6 +86,15 @@ const Header: React.FC = () => {
                 sx={{ color: 'white', fontWeight: 600 }}
               >
                 Adicionar Imóvel
+              </Button>
+
+              <Button
+                color="inherit"
+                startIcon={<GroupIcon />}
+                onClick={() => navigate('/groups')}
+                sx={{ color: 'white', fontWeight: 600 }}
+              >
+                Grupos
               </Button>
 
               {user.userType === 'realtor' && (
