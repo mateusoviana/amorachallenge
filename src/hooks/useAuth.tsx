@@ -1,5 +1,6 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { User } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface AuthContextType {
   user: User | null;
@@ -40,22 +41,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
-      // Simular chamada de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Mock de usuário para demonstração
-      const mockUser: User = {
-        id: '1',
-        name: 'João Silva',
-        email,
+      // Buscar usuário no Supabase
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .single();
+      
+      if (error || !data) {
+        return false;
+      }
+      
+      const user: User = {
+        id: data.id,
+        name: data.name,
+        email: data.email,
         password: '',
-        userType: 'buyer',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        userType: data.user_type,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
       };
       
-      setUser(mockUser);
-      localStorage.setItem('amora_user', JSON.stringify(mockUser));
+      setUser(user);
+      localStorage.setItem('amora_user', JSON.stringify(user));
       return true;
     } catch (error) {
       console.error('Erro no login:', error);
@@ -73,14 +82,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<boolean> => {
     try {
       setLoading(true);
-      // Simular chamada de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          name: userData.name,
+          email: userData.email,
+          user_type: userData.userType,
+        })
+        .select()
+        .single();
+      
+      if (error || !data) {
+        return false;
+      }
       
       const newUser: User = {
-        ...userData,
-        id: Date.now().toString(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        password: '',
+        userType: data.user_type,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
       };
       
       setUser(newUser);
@@ -94,15 +118,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const toggleUserType = () => {
+  const toggleUserType = async () => {
     if (user) {
-      const updatedUser: User = {
-        ...user,
-        userType: user.userType === 'buyer' ? 'realtor' : 'buyer',
-        updatedAt: new Date(),
-      };
-      setUser(updatedUser);
-      localStorage.setItem('amora_user', JSON.stringify(updatedUser));
+      const newUserType = user.userType === 'buyer' ? 'realtor' : 'buyer';
+      
+      const { error } = await supabase
+        .from('users')
+        .update({ user_type: newUserType })
+        .eq('id', user.id);
+      
+      if (!error) {
+        const updatedUser: User = {
+          ...user,
+          userType: newUserType,
+          updatedAt: new Date(),
+        };
+        setUser(updatedUser);
+        localStorage.setItem('amora_user', JSON.stringify(updatedUser));
+      }
     }
   };
 

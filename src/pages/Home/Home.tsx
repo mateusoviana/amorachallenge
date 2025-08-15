@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import ApartmentCard from '../../components/ApartmentCard/ApartmentCard';
 import Filters from '../../components/Filters/Filters';
+import TestSupabase from '../../components/TestSupabase/TestSupabase';
 import { Apartment, FilterOptions, Group } from '../../types';
 
 // Mock data para demonstração
@@ -506,6 +507,7 @@ const Home: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
+      <TestSupabase />
       <Box 
         sx={{ 
           mb: 4,

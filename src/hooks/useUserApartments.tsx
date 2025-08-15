@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { Apartment } from '../types';
+import { supabase } from '../lib/supabase';
 
 export const useUserApartments = () => {
   const { user } = useAuth();
@@ -17,69 +18,61 @@ export const useUserApartments = () => {
   const fetchUserApartments = async () => {
     try {
       setLoading(true);
-      // Simular chamada de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Mock de apartamentos para demonstração
-      const mockApartments: Apartment[] = [
-        {
-          id: '1',
-          title: 'Apartamento Moderno no Centro',
-          description: 'Apartamento recém-reformado com acabamento de luxo',
-          price: 450000,
-          address: 'Rua das Flores, 123',
-          neighborhood: 'Centro',
-          city: 'São Paulo',
-          state: 'SP',
-          bedrooms: 2,
-          bathrooms: 2,
-          parkingSpaces: 1,
-          area: 75,
-          isPublic: false,
-          ownerId: user?.id || '',
-          owner: user!,
-          groups: [],
-          images: ['https://via.placeholder.com/300x200'],
-          editors: [],
-          createdAt: new Date(),
-          updatedAt: new Date(),
+      const { data, error } = await supabase
+        .from('apartments')
+        .select(`
+          *,
+          owner:users!owner_id(*),
+          apartment_groups(
+            groups(*)
+          )
+        `)
+        .eq('owner_id', user?.id);
+      
+      if (error) throw error;
+      
+      const apartments: Apartment[] = data?.map(apt => ({
+        id: apt.id,
+        title: apt.title,
+        description: apt.description,
+        price: apt.price,
+        address: apt.address,
+        neighborhood: apt.neighborhood,
+        city: apt.city,
+        state: apt.state,
+        bedrooms: apt.bedrooms,
+        bathrooms: apt.bathrooms,
+        parkingSpaces: apt.parking_spaces,
+        area: apt.area,
+        isPublic: apt.is_public,
+        ownerId: apt.owner_id,
+        owner: {
+          id: apt.owner.id,
+          name: apt.owner.name,
+          email: apt.owner.email,
+          password: '',
+          userType: apt.owner.user_type,
+          createdAt: new Date(apt.owner.created_at),
+          updatedAt: new Date(apt.owner.updated_at),
         },
-        {
-          id: '2',
-          title: 'Cobertura Duplex',
-          description: 'Cobertura com vista panorâmica da cidade',
-          price: 1200000,
-          address: 'Av. Paulista, 1000',
-          neighborhood: 'Bela Vista',
-          city: 'São Paulo',
-          state: 'SP',
-          bedrooms: 3,
-          bathrooms: 3,
-          parkingSpaces: 2,
-          area: 120,
-          isPublic: true,
-          ownerId: user?.id || '',
-          owner: user!,
-          groups: [],
-          images: ['https://via.placeholder.com/300x200'],
-          editors: [],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ];
+        groups: apt.apartment_groups?.map((ag: any) => ({
+          id: ag.groups.id,
+          name: ag.groups.name,
+          description: ag.groups.description,
+          isPublic: ag.groups.is_public,
+          createdAt: new Date(ag.groups.created_at),
+          updatedAt: new Date(ag.groups.updated_at),
+          members: [],
+          apartments: [],
+        })) || [],
+        images: apt.images || [],
+        editors: apt.editors || [],
+        createdAt: new Date(apt.created_at),
+        updatedAt: new Date(apt.updated_at),
+      })) || [];
 
-      console.log('Apartamentos mock criados:', mockApartments);
-      console.log('Verificando propriedade editors:', mockApartments.map(apt => ({ id: apt.id, editors: apt.editors })));
-
-      // Garantir que todos os apartamentos tenham a propriedade editors
-      const validatedApartments = mockApartments.map(apt => ({
-        ...apt,
-        editors: Array.isArray(apt.editors) ? apt.editors : []
-      }));
-
-      console.log('Apartamentos validados:', validatedApartments);
-
-      setUserApartments(validatedApartments);
+      setUserApartments(apartments);
     } catch (err) {
       setError('Erro ao carregar apartamentos');
       console.error('Erro ao buscar apartamentos:', err);
@@ -91,23 +84,31 @@ export const useUserApartments = () => {
   const updateApartment = async (id: string, updates: Partial<Apartment>) => {
     try {
       setLoading(true);
-      console.log('Atualizando apartamento:', id);
-      console.log('Updates recebidos:', updates);
       
-      // Simular chamada de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const updateData: any = {};
+      if (updates.title) updateData.title = updates.title;
+      if (updates.description) updateData.description = updates.description;
+      if (updates.price) updateData.price = updates.price;
+      if (updates.address) updateData.address = updates.address;
+      if (updates.neighborhood) updateData.neighborhood = updates.neighborhood;
+      if (updates.city) updateData.city = updates.city;
+      if (updates.state) updateData.state = updates.state;
+      if (updates.bedrooms) updateData.bedrooms = updates.bedrooms;
+      if (updates.bathrooms) updateData.bathrooms = updates.bathrooms;
+      if (updates.parkingSpaces) updateData.parking_spaces = updates.parkingSpaces;
+      if (updates.area) updateData.area = updates.area;
+      if (updates.isPublic !== undefined) updateData.is_public = updates.isPublic;
+      if (updates.images) updateData.images = updates.images;
+      if (updates.editors) updateData.editors = updates.editors;
       
-      setUserApartments(prev => {
-        console.log('Estado anterior dos apartamentos:', prev);
-        const updated = prev.map(apt => 
-          apt.id === id 
-            ? { ...apt, ...updates, updatedAt: new Date() }
-            : apt
-        );
-        console.log('Estado atualizado dos apartamentos:', updated);
-        return updated;
-      });
+      const { error } = await supabase
+        .from('apartments')
+        .update(updateData)
+        .eq('id', id);
       
+      if (error) throw error;
+      
+      await fetchUserApartments();
       return true;
     } catch (err) {
       setError('Erro ao atualizar apartamento');
@@ -120,8 +121,13 @@ export const useUserApartments = () => {
   const deleteApartment = async (id: string) => {
     try {
       setLoading(true);
-      // Simular chamada de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const { error } = await supabase
+        .from('apartments')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
       
       setUserApartments(prev => prev.filter(apt => apt.id !== id));
       return true;
@@ -136,19 +142,33 @@ export const useUserApartments = () => {
   const addApartment = async (apartment: Omit<Apartment, 'id' | 'createdAt' | 'updatedAt' | 'owner'>) => {
     try {
       setLoading(true);
-      // Simular chamada de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const newApartment: Apartment = {
-        ...apartment,
-        id: Date.now().toString(),
-        owner: user!,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      setUserApartments(prev => [...prev, newApartment]);
-      return newApartment;
+      const { data, error } = await supabase
+        .from('apartments')
+        .insert({
+          title: apartment.title,
+          description: apartment.description,
+          price: apartment.price,
+          address: apartment.address,
+          neighborhood: apartment.neighborhood,
+          city: apartment.city,
+          state: apartment.state,
+          bedrooms: apartment.bedrooms,
+          bathrooms: apartment.bathrooms,
+          parking_spaces: apartment.parkingSpaces,
+          area: apartment.area,
+          is_public: apartment.isPublic,
+          owner_id: apartment.ownerId,
+          images: apartment.images,
+          editors: apartment.editors,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      await fetchUserApartments();
+      return data;
     } catch (err) {
       setError('Erro ao adicionar apartamento');
       throw err;

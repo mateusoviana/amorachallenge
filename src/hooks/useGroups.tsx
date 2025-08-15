@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { Group, GroupMember } from '../types';
+import { supabase } from '../lib/supabase';
 
 export const useGroups = () => {
   const { user } = useAuth();
@@ -17,74 +18,38 @@ export const useGroups = () => {
   const fetchUserGroups = async () => {
     try {
       setLoading(true);
-      // Simular chamada de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Mock de grupos para demonstração
-      const mockGroups: Group[] = [
-        {
-          id: '1',
-          name: 'Grupo Familiar',
-          description: 'Imóveis compartilhados com a família',
-          isPublic: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          members: [
-            {
-              id: '1',
-              userId: user?.id || '',
-              groupId: '1',
-              role: 'admin',
-              user: user!,
-              group: {} as Group,
-              createdAt: new Date(),
-            }
-          ],
+      const { data, error } = await supabase
+        .from('group_members')
+        .select(`
+          groups!inner(
+            id,
+            name,
+            description,
+            is_public,
+            created_at,
+            updated_at
+          )
+        `)
+        .eq('user_id', user?.id);
+      
+      if (error) throw error;
+      
+      const groups: Group[] = data?.map(item => {
+        const group = (item as any).groups;
+        return {
+          id: group.id,
+          name: group.name,
+          description: group.description,
+          isPublic: group.is_public,
+          createdAt: new Date(group.created_at),
+          updatedAt: new Date(group.updated_at),
+          members: [],
           apartments: [],
-        },
-        {
-          id: '2',
-          name: 'Amigos do Trabalho',
-          description: 'Imóveis compartilhados com colegas',
-          isPublic: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          members: [
-            {
-              id: '2',
-              userId: user?.id || '',
-              groupId: '2',
-              role: 'member',
-              user: user!,
-              group: {} as Group,
-              createdAt: new Date(),
-            }
-          ],
-          apartments: [],
-        },
-        {
-          id: '3',
-          name: 'Investimentos',
-          description: 'Portfólio de investimentos imobiliários',
-          isPublic: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          members: [
-            {
-              id: '3',
-              userId: user?.id || '',
-              groupId: '3',
-              role: 'admin',
-              user: user!,
-              group: {} as Group,
-              createdAt: new Date(),
-            }
-          ],
-          apartments: [],
-        },
-      ];
+        };
+      }) || [];
 
-      setUserGroups(mockGroups);
+      setUserGroups(groups);
     } catch (err) {
       setError('Erro ao carregar grupos');
       console.error('Erro ao buscar grupos:', err);
@@ -96,30 +61,34 @@ export const useGroups = () => {
   const createGroup = async (groupData: Omit<Group, 'id' | 'createdAt' | 'updatedAt' | 'members' | 'apartments'>) => {
     try {
       setLoading(true);
-      // Simular chamada de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const newGroup: Group = {
-        ...groupData,
-        id: Date.now().toString(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        members: [
-          {
-            id: Date.now().toString(),
-            userId: user?.id || '',
-            groupId: Date.now().toString(),
-            role: 'admin',
-            user: user!,
-            group: {} as Group,
-            createdAt: new Date(),
-          }
-        ],
-        apartments: [],
-      };
-
-      setUserGroups(prev => [...prev, newGroup]);
-      return newGroup;
+      // Criar o grupo
+      const { data: groupResult, error: groupError } = await supabase
+        .from('groups')
+        .insert({
+          name: groupData.name,
+          description: groupData.description,
+          is_public: groupData.isPublic,
+          admin_id: user?.id,
+        })
+        .select()
+        .single();
+      
+      if (groupError) throw groupError;
+      
+      // Adicionar o usuário como admin do grupo
+      const { error: memberError } = await supabase
+        .from('group_members')
+        .insert({
+          group_id: groupResult.id,
+          user_id: user?.id,
+          role: 'admin',
+        });
+      
+      if (memberError) throw memberError;
+      
+      await fetchUserGroups();
+      return groupResult;
     } catch (err) {
       setError('Erro ao criar grupo');
       throw err;
