@@ -17,6 +17,7 @@ import {
   Add as AddIcon,
   AccountCircle as AccountCircleIcon,
   Logout as LogoutIcon,
+  Dashboard as DashboardIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -85,6 +86,17 @@ const Header: React.FC = () => {
               >
                 Adicionar Imóvel
               </Button>
+
+              {user.userType === 'realtor' && (
+                <Button
+                  color="inherit"
+                  startIcon={<DashboardIcon />}
+                  onClick={() => navigate('/dashboard')}
+                  sx={{ color: 'white', fontWeight: 600 }}
+                >
+                  Dashboard
+                </Button>
+              )}
 
               <IconButton
                 size="large"

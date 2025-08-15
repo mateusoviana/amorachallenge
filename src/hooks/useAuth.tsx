@@ -6,6 +6,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   register: (userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) => Promise<boolean>;
+  toggleUserType: () => void;
   loading: boolean;
 }
 
@@ -93,11 +94,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const toggleUserType = () => {
+    if (user) {
+      const updatedUser: User = {
+        ...user,
+        userType: user.userType === 'buyer' ? 'realtor' : 'buyer',
+        updatedAt: new Date(),
+      };
+      setUser(updatedUser);
+      localStorage.setItem('amora_user', JSON.stringify(updatedUser));
+    }
+  };
+
   const value: AuthContextType = {
     user,
     login,
     logout,
     register,
+    toggleUserType,
     loading,
   };
 

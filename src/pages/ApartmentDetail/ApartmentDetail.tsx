@@ -70,12 +70,8 @@ const mockApartment: Apartment = {
     updatedAt: new Date(),
   },
   groups: [],
-  images: [
-    'https://via.placeholder.com/800x600?text=Sala+de+Estar',
-    'https://via.placeholder.com/800x600?text=Quarto+Principal',
-    'https://via.placeholder.com/800x600?text=Cozinha',
-    'https://via.placeholder.com/800x600?text=Banheiro',
-  ],
+  images: ['https://via.placeholder.com/400x200?text=Apartamento+1'],
+  editors: [],
   createdAt: new Date(),
   updatedAt: new Date(),
 };

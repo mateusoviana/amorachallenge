@@ -26,6 +26,8 @@ export interface Apartment {
   owner: User;
   groups: Group[];
   images: string[];
+  // Novos campos para permissões de edição
+  editors: string[]; // IDs dos usuários que podem editar
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,4 +62,38 @@ export interface FilterOptions {
   city: string[];
   neighborhood: string[];
   groups: string[];
+}
+
+// Novos tipos para dashboard
+export interface DashboardStats {
+  totalApartments: number;
+  apartmentsByNeighborhood: NeighborhoodStats[];
+  averagePriceByNeighborhood: NeighborhoodPriceStats[];
+  apartmentsByPriceRange: PriceRangeStats[];
+  monthlyGrowth: MonthlyGrowthStats[];
+}
+
+export interface NeighborhoodStats {
+  neighborhood: string;
+  count: number;
+  percentage: number;
+}
+
+export interface NeighborhoodPriceStats {
+  neighborhood: string;
+  averagePrice: number;
+  minPrice: number;
+  maxPrice: number;
+}
+
+export interface PriceRangeStats {
+  range: string;
+  count: number;
+  percentage: number;
+}
+
+export interface MonthlyGrowthStats {
+  month: string;
+  newApartments: number;
+  totalApartments: number;
 }

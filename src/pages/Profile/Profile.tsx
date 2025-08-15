@@ -43,6 +43,7 @@ import {
   Person as PersonIcon,
   Settings as SettingsIcon,
   Home as HomeIcon,
+  SwapHoriz as SwapHorizIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { User, Group, Apartment } from '../../types';
@@ -108,15 +109,22 @@ const mockApartments: Apartment[] = [
     },
     groups: [],
     images: ['https://via.placeholder.com/400x200?text=Apartamento+1'],
+    editors: [],
     createdAt: new Date(),
     updatedAt: new Date(),
   },
 ];
 
+// Garantir que todos os apartamentos mock tenham a propriedade editors
+const validatedMockApartments = mockApartments.map(apt => ({
+  ...apt,
+  editors: Array.isArray(apt.editors) ? apt.editors : []
+}));
+
 const Profile: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, toggleUserType } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -132,7 +140,7 @@ const Profile: React.FC = () => {
 
   // Estados para gerenciamento de grupos
   const [groups, setGroups] = useState<Group[]>(mockGroups);
-  const [apartments, setApartments] = useState<Apartment[]>(mockApartments);
+  const [apartments, setApartments] = useState<Apartment[]>(validatedMockApartments);
   const [newGroupDialog, setNewGroupDialog] = useState(false);
   const [newGroupData, setNewGroupData] = useState({
     name: '',
@@ -187,6 +195,11 @@ const Profile: React.FC = () => {
       userType: user?.userType || 'buyer',
     });
     setEditingProfile(false);
+  };
+
+  const handleToggleUserType = () => {
+    toggleUserType();
+    setSuccess('Tipo de usuário alterado com sucesso!');
   };
 
   const handleCreateGroup = async () => {
@@ -270,11 +283,22 @@ const Profile: React.FC = () => {
             <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
               {user.email}
             </Typography>
-            <Chip
-              label={user.userType === 'realtor' ? 'Corretor' : 'Comprador'}
-              color={user.userType === 'realtor' ? 'primary' : 'secondary'}
-              sx={{ fontWeight: 600 }}
-            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Chip
+                label={user.userType === 'realtor' ? 'Corretor' : 'Comprador'}
+                color={user.userType === 'realtor' ? 'primary' : 'secondary'}
+                sx={{ fontWeight: 600 }}
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<SwapHorizIcon />}
+                onClick={handleToggleUserType}
+                sx={{ ml: 1 }}
+              >
+                Alternar Tipo
+              </Button>
+            </Box>
           </Box>
           <Button
             variant="outlined"

@@ -21,47 +21,96 @@ import {
   Alert,
   CircularProgress,
   Divider,
+  Tabs,
+  Tab,
+  Card,
+  CardContent,
+  CardActions,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  Checkbox,
 } from '@mui/material';
 import {
   Save as SaveIcon,
   Cancel as CancelIcon,
   Add as AddIcon,
   CloudUpload as CloudUploadIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Visibility as VisibilityIcon,
+  Group as GroupIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
-import { Apartment, Group } from '../../types';
+import { useGroups } from '../../hooks/useGroups';
+import { useUserApartments } from '../../hooks/useUserApartments';
+import { Apartment, Group, User } from '../../types';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`apartment-tabpanel-${index}`}
+      aria-labelledby={`apartment-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  );
+}
 
 const AddApartment: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { userGroups } = useGroups();
+  const { userApartments, updateApartment, deleteApartment, addApartment } = useUserApartments();
+  
+  const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
+  const [showEditorsDialog, setShowEditorsDialog] = useState(false);
+  const [selectedEditors, setSelectedEditors] = useState<string[]>([]);
 
-  // Mock groups para demonstração
-  const mockGroups: Group[] = [
-    {
-      id: '1',
-      name: 'Grupo Público',
-      description: 'Imóveis públicos disponíveis para todos os usuários',
-      isPublic: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      members: [],
-      apartments: [],
-    },
-    {
-      id: '2',
-      name: 'Meus Favoritos',
-      description: 'Imóveis de interesse pessoal',
-      isPublic: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      members: [],
-      apartments: [],
-    },
+  // Mock de usuários para demonstração
+  const mockUsers: User[] = [
+    { id: '1', name: 'João Silva', email: 'joao@email.com', password: '', userType: 'buyer', createdAt: new Date(), updatedAt: new Date() },
+    { id: '2', name: 'Maria Santos', email: 'maria@email.com', password: '', userType: 'buyer', createdAt: new Date(), updatedAt: new Date() },
+    { id: '3', name: 'Pedro Costa', email: 'pedro@email.com', password: '', userType: 'realtor', createdAt: new Date(), updatedAt: new Date() },
   ];
+
+  // Função para garantir que selectedEditors seja sempre um array válido
+  const ensureSelectedEditorsIsArray = (editors: any): string[] => {
+    if (Array.isArray(editors)) {
+      return editors;
+    }
+    console.warn('editors não é um array, inicializando como array vazio:', editors);
+    return [];
+  };
+
+  // Função para atualizar selectedEditors garantindo que seja sempre um array
+  const updateSelectedEditors = (newEditors: string[]) => {
+    const validEditors = ensureSelectedEditorsIsArray(newEditors);
+    setSelectedEditors(validEditors);
+  };
 
   const [formData, setFormData] = useState({
     title: '',
@@ -79,6 +128,10 @@ const AddApartment: React.FC = () => {
     selectedGroups: [] as string[],
     images: [] as string[],
   });
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+  };
 
   const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({
@@ -147,9 +200,6 @@ const AddApartment: React.FC = () => {
     setSuccess(null);
 
     try {
-      // Simular envio para API
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
       const newApartment: Omit<Apartment, 'id' | 'createdAt' | 'updatedAt' | 'owner'> = {
         title: formData.title,
         description: formData.description,
@@ -164,23 +214,157 @@ const AddApartment: React.FC = () => {
         area: parseFloat(formData.area),
         isPublic: formData.isPublic,
         ownerId: user?.id || '',
-        groups: mockGroups.filter(group => formData.selectedGroups.includes(group.id)),
+        groups: userGroups.filter(group => formData.selectedGroups.includes(group.id)),
         images: formData.images,
+        editors: [],
       };
 
-      console.log('Novo apartamento:', newApartment);
+      await addApartment(newApartment);
       
       setSuccess('Apartamento cadastrado com sucesso!');
       
-      // Redirecionar após 2 segundos
-      setTimeout(() => {
-        navigate('/');
-      }, 2000);
+      // Limpar formulário
+      setFormData({
+        title: '',
+        description: '',
+        price: '',
+        address: '',
+        neighborhood: '',
+        city: '',
+        state: '',
+        bedrooms: '',
+        bathrooms: '',
+        parkingSpaces: '',
+        area: '',
+        isPublic: false,
+        selectedGroups: [],
+        images: [],
+      });
 
     } catch (err) {
       setError('Erro ao cadastrar apartamento. Tente novamente.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditApartment = (apartment: Apartment) => {
+    setEditingApartment(apartment);
+    setFormData({
+      title: apartment.title,
+      description: apartment.description,
+      price: apartment.price.toString(),
+      address: apartment.address,
+      neighborhood: apartment.neighborhood,
+      city: apartment.city,
+      state: apartment.state,
+      bedrooms: apartment.bedrooms.toString(),
+      bathrooms: apartment.bathrooms.toString(),
+      parkingSpaces: apartment.parkingSpaces.toString(),
+      area: apartment.area.toString(),
+      isPublic: apartment.isPublic,
+      selectedGroups: apartment.groups.map(g => g.id),
+      images: apartment.images,
+    });
+    setActiveTab(0);
+  };
+
+  const handleUpdateApartment = async () => {
+    if (!editingApartment) return;
+
+    setLoading(true);
+    try {
+      const updates = {
+        title: formData.title,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        address: formData.address,
+        neighborhood: formData.neighborhood,
+        city: formData.city,
+        state: formData.state,
+        bedrooms: parseInt(formData.bedrooms),
+        bathrooms: parseInt(formData.bathrooms),
+        parkingSpaces: parseInt(formData.parkingSpaces),
+        area: parseFloat(formData.area),
+        isPublic: formData.isPublic,
+        groups: userGroups.filter(group => formData.selectedGroups.includes(group.id)),
+        images: formData.images,
+        // Preservar os editores existentes
+        editors: editingApartment.editors,
+      };
+
+      await updateApartment(editingApartment.id, updates);
+      setEditingApartment(null);
+      setSuccess('Apartamento atualizado com sucesso!');
+      
+      // Limpar formulário
+      setFormData({
+        title: '',
+        description: '',
+        price: '',
+        address: '',
+        neighborhood: '',
+        city: '',
+        state: '',
+        bedrooms: '',
+        bathrooms: '',
+        parkingSpaces: '',
+        area: '',
+        isPublic: false,
+        selectedGroups: [],
+        images: [],
+      });
+
+    } catch (err) {
+      setError('Erro ao atualizar apartamento');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteApartment = async (id: string) => {
+    if (window.confirm('Tem certeza que deseja deletar este apartamento?')) {
+      try {
+        await deleteApartment(id);
+        setSuccess('Apartamento deletado com sucesso!');
+      } catch (err) {
+        setError('Erro ao deletar apartamento');
+      }
+    }
+  };
+
+  const handleManageEditors = (apartment: Apartment) => {
+    console.log('Gerenciando editores para apartamento:', apartment);
+    console.log('Editores atuais:', apartment.editors);
+    
+    // Garantir que apartment.editors existe e é um array
+    const currentEditors = ensureSelectedEditorsIsArray(apartment.editors);
+    console.log('Editores processados:', currentEditors);
+    
+    setSelectedEditors(currentEditors);
+    setEditingApartment(apartment);
+    setShowEditorsDialog(true);
+  };
+
+  const handleSaveEditors = async () => {
+    if (!editingApartment) return;
+
+    try {
+      // Garantir que selectedEditors seja um array válido
+      const validEditors = ensureSelectedEditorsIsArray(selectedEditors);
+      
+      console.log('Salvando editores:', validEditors);
+      console.log('Para apartamento:', editingApartment.id);
+      
+      await updateApartment(editingApartment.id, { editors: validEditors });
+      setShowEditorsDialog(false);
+      setSuccess('Editores atualizados com sucesso!');
+      
+      // Atualizar o apartamento localmente para refletir as mudanças
+      setEditingApartment(prev => prev ? { ...prev, editors: validEditors } : null);
+    } catch (err) {
+      console.error('Erro ao salvar editores:', err);
+      setError('Erro ao atualizar editores');
     }
   };
 
@@ -199,14 +383,17 @@ const AddApartment: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       <Paper sx={{ p: 4 }}>
         <Box sx={{ mb: 4, textAlign: 'center' }}>
           <Typography variant="h4" component="h1" sx={{ fontWeight: 700, color: theme.palette.secondary.main, mb: 2 }}>
-            Cadastrar Novo Imóvel
+            {editingApartment ? 'Editar Imóvel' : 'Gerenciar Imóveis'}
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Preencha as informações do imóvel que deseja cadastrar no sistema.
+            {editingApartment 
+              ? 'Edite as informações do imóvel selecionado.'
+              : 'Cadastre novos imóveis e gerencie os existentes.'
+            }
           </Typography>
         </Box>
 
@@ -222,276 +409,437 @@ const AddApartment: React.FC = () => {
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
-            {/* Informações Básicas */}
-            <Grid item xs={12}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: theme.palette.secondary.main }}>
-                Informações Básicas
-              </Typography>
-            </Grid>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs value={activeTab} onChange={handleTabChange} aria-label="apartment management tabs">
+            <Tab label="Cadastrar/Editar" />
+            <Tab label="Meus Imóveis" />
+            {user.userType === 'realtor' && <Tab label="Dashboard" />}
+          </Tabs>
+        </Box>
 
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Título do Imóvel"
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
-                required
-                placeholder="Ex: Apartamento Moderno no Centro"
-              />
-            </Grid>
+        {/* Tab 1: Cadastrar/Editar */}
+        <TabPanel value={activeTab} index={0}>
+          <form onSubmit={editingApartment ? (e) => { e.preventDefault(); handleUpdateApartment(); } : handleSubmit}>
+            <Grid container spacing={3}>
+              {/* Informações Básicas */}
+              <Grid item xs={12}>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: theme.palette.secondary.main }}>
+                  Informações Básicas
+                </Typography>
+              </Grid>
 
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Descrição"
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                required
-                multiline
-                rows={4}
-                placeholder="Descreva as características, localização e benefícios do imóvel..."
-              />
-            </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Título do Imóvel"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  required
+                  placeholder="Ex: Apartamento Moderno no Centro"
+                />
+              </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Preço (R$)"
-                value={formData.price}
-                onChange={(e) => handleInputChange('price', e.target.value)}
-                required
-                type="number"
-                placeholder="450000"
-                InputProps={{
-                  startAdornment: <Typography variant="body2" sx={{ mr: 1 }}>R$</Typography>,
-                }}
-              />
-            </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Descrição"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  required
+                  multiline
+                  rows={4}
+                  placeholder="Descreva as características, localização e benefícios do imóvel..."
+                />
+              </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Área (m²)"
-                value={formData.area}
-                onChange={(e) => handleInputChange('area', e.target.value)}
-                required
-                type="number"
-                placeholder="75"
-                InputProps={{
-                  endAdornment: <Typography variant="body2" sx={{ ml: 1 }}>m²</Typography>,
-                }}
-              />
-            </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Preço (R$)"
+                  value={formData.price}
+                  onChange={(e) => handleInputChange('price', e.target.value)}
+                  required
+                  type="number"
+                  placeholder="450000"
+                  InputProps={{
+                    startAdornment: <Typography variant="body2" sx={{ mr: 1 }}>R$</Typography>,
+                  }}
+                />
+              </Grid>
 
-            <Grid item xs={12}>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: theme.palette.secondary.main }}>
-                Características
-              </Typography>
-            </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Área (m²)"
+                  value={formData.area}
+                  onChange={(e) => handleInputChange('area', e.target.value)}
+                  required
+                  type="number"
+                  placeholder="75"
+                  InputProps={{
+                    endAdornment: <Typography variant="body2" sx={{ ml: 1 }}>m²</Typography>,
+                  }}
+                />
+              </Grid>
 
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Quartos"
-                value={formData.bedrooms}
-                onChange={(e) => handleInputChange('bedrooms', e.target.value)}
-                required
-                type="number"
-                inputProps={{ min: 1, max: 10 }}
-              />
-            </Grid>
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: theme.palette.secondary.main }}>
+                  Características
+                </Typography>
+              </Grid>
 
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Banheiros"
-                value={formData.bathrooms}
-                onChange={(e) => handleInputChange('bathrooms', e.target.value)}
-                required
-                type="number"
-                inputProps={{ min: 1, max: 10 }}
-              />
-            </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Quartos"
+                  value={formData.bedrooms}
+                  onChange={(e) => handleInputChange('bedrooms', e.target.value)}
+                  required
+                  type="number"
+                  inputProps={{ min: 1, max: 10 }}
+                />
+              </Grid>
 
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Vagas de Garagem"
-                value={formData.parkingSpaces}
-                onChange={(e) => handleInputChange('parkingSpaces', e.target.value)}
-                required
-                type="number"
-                inputProps={{ min: 0, max: 10 }}
-              />
-            </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Banheiros"
+                  value={formData.bathrooms}
+                  onChange={(e) => handleInputChange('bathrooms', e.target.value)}
+                  required
+                  type="number"
+                  inputProps={{ min: 1, max: 10 }}
+                />
+              </Grid>
 
-            <Grid item xs={12}>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: theme.palette.secondary.main }}>
-                Localização
-              </Typography>
-            </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Vagas de Garagem"
+                  value={formData.parkingSpaces}
+                  onChange={(e) => handleInputChange('parkingSpaces', e.target.value)}
+                  required
+                  type="number"
+                  inputProps={{ min: 0, max: 10 }}
+                />
+              </Grid>
 
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Endereço"
-                value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                required
-                placeholder="Rua das Flores, 123"
-              />
-            </Grid>
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: theme.palette.secondary.main }}>
+                  Localização
+                </Typography>
+              </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Bairro"
-                value={formData.neighborhood}
-                onChange={(e) => handleInputChange('neighborhood', e.target.value)}
-                required
-                placeholder="Centro"
-              />
-            </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Endereço"
+                  value={formData.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  required
+                  placeholder="Rua das Flores, 123"
+                />
+              </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Cidade"
-                value={formData.city}
-                onChange={(e) => handleInputChange('city', e.target.value)}
-                required
-                placeholder="São Paulo"
-              />
-            </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Bairro"
+                  value={formData.neighborhood}
+                  onChange={(e) => handleInputChange('neighborhood', e.target.value)}
+                  required
+                  placeholder="Centro"
+                />
+              </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Estado"
-                value={formData.state}
-                onChange={(e) => handleInputChange('state', e.target.value)}
-                required
-                placeholder="SP"
-                inputProps={{ maxLength: 2 }}
-              />
-            </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Cidade"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  required
+                  placeholder="São Paulo"
+                />
+              </Grid>
 
-            <Grid item xs={12}>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: theme.palette.secondary.main }}>
-                Configurações
-              </Typography>
-            </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Estado"
+                  value={formData.state}
+                  onChange={(e) => handleInputChange('state', e.target.value)}
+                  required
+                  placeholder="SP"
+                  inputProps={{ maxLength: 2 }}
+                />
+              </Grid>
 
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.isPublic}
-                    onChange={(e) => handleInputChange('isPublic', e.target.checked)}
-                    color="primary"
-                  />
-                }
-                label="Imóvel Público (visível para todos os usuários)"
-              />
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                {user.userType === 'realtor' 
-                  ? 'Corretores podem cadastrar imóveis públicos que aparecerão para todos os usuários.'
-                  : 'Compradores podem cadastrar imóveis privados apenas para grupos específicos.'
-                }
-              </Typography>
-            </Grid>
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: theme.palette.secondary.main }}>
+                  Configurações
+                </Typography>
+              </Grid>
 
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Grupos</InputLabel>
-                <Select
-                  multiple
-                  value={formData.selectedGroups}
-                  onChange={handleGroupsChange}
-                  input={<OutlinedInput label="Grupos" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => {
-                        const group = mockGroups.find(g => g.id === value);
-                        return <Chip key={value} label={group?.name || value} size="small" />;
-                      })}
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.isPublic}
+                      onChange={(e) => handleInputChange('isPublic', e.target.checked)}
+                      color="primary"
+                      disabled={user.userType === 'buyer'}
+                    />
+                  }
+                  label="Imóvel Público (visível para todos os usuários)"
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                  {user.userType === 'realtor' 
+                    ? 'Corretores podem cadastrar imóveis públicos que aparecerão para todos os usuários.'
+                    : 'Compradores podem cadastrar apenas imóveis privados para grupos específicos.'
+                  }
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Grupos</InputLabel>
+                  <Select
+                    multiple
+                    value={formData.selectedGroups}
+                    onChange={handleGroupsChange}
+                    input={<OutlinedInput label="Grupos" />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => {
+                          const group = userGroups.find(g => g.id === value);
+                          return <Chip key={value} label={group?.name || value} size="small" />;
+                        })}
+                      </Box>
+                    )}
+                  >
+                    {userGroups.map((group) => (
+                      <MenuItem key={group.id} value={group.id}>
+                        {group.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: theme.palette.secondary.main }}>
+                  Imagens
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<CloudUploadIcon />}
+                    onClick={handleAddImage}
+                    sx={{ alignSelf: 'flex-start' }}
+                  >
+                    Adicionar Imagem
+                  </Button>
+
+                  {formData.images.length > 0 && (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {formData.images.map((image, index) => (
+                        <Chip
+                          key={index}
+                          label={`Imagem ${index + 1}`}
+                          onDelete={() => handleRemoveImage(index)}
+                          color="primary"
+                          variant="outlined"
+                        />
+                      ))}
                     </Box>
                   )}
-                >
-                  {mockGroups.map((group) => (
-                    <MenuItem key={group.id} value={group.id}>
-                      {group.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                </Box>
+              </Grid>
+
+              {/* Botões de Ação */}
+              <Grid item xs={12}>
+                <Divider sx={{ my: 3 }} />
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                  {editingApartment && (
+                    <Button
+                      variant="outlined"
+                      onClick={() => {
+                        setEditingApartment(null);
+                        setFormData({
+                          title: '',
+                          description: '',
+                          price: '',
+                          address: '',
+                          neighborhood: '',
+                          city: '',
+                          state: '',
+                          bedrooms: '',
+                          bathrooms: '',
+                          parkingSpaces: '',
+                          area: '',
+                          isPublic: false,
+                          selectedGroups: [],
+                          images: [],
+                        });
+                      }}
+                      size="large"
+                    >
+                      Cancelar Edição
+                    </Button>
+                  )}
+                  <Button
+                    variant="outlined"
+                    startIcon={<CancelIcon />}
+                    onClick={handleCancel}
+                    size="large"
+                  >
+                    Voltar
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+                    size="large"
+                    disabled={loading}
+                  >
+                    {loading ? 'Salvando...' : editingApartment ? 'Atualizar Imóvel' : 'Salvar Imóvel'}
+                  </Button>
+                </Box>
+              </Grid>
             </Grid>
+          </form>
+        </TabPanel>
 
-            <Grid item xs={12}>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: theme.palette.secondary.main }}>
-                Imagens
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<CloudUploadIcon />}
-                  onClick={handleAddImage}
-                  sx={{ alignSelf: 'flex-start' }}
-                >
-                  Adicionar Imagem
-                </Button>
-
-                {formData.images.length > 0 && (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {formData.images.map((image, index) => (
-                      <Chip
-                        key={index}
-                        label={`Imagem ${index + 1}`}
-                        onDelete={() => handleRemoveImage(index)}
-                        color="primary"
-                        variant="outlined"
+        {/* Tab 2: Meus Imóveis */}
+        <TabPanel value={activeTab} index={1}>
+          <Grid container spacing={3}>
+            {userApartments.map((apartment) => (
+              <Grid item xs={12} sm={6} md={4} key={apartment.id}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" component="h3" gutterBottom>
+                      {apartment.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" paragraph>
+                      {apartment.description.substring(0, 100)}...
+                    </Typography>
+                    <Typography variant="h6" color="primary" gutterBottom>
+                      R$ {apartment.price.toLocaleString()}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                      <Chip 
+                        size="small" 
+                        label={`${apartment.bedrooms} quartos`} 
+                        variant="outlined" 
                       />
-                    ))}
-                  </Box>
-                )}
-              </Box>
-            </Grid>
-
-            {/* Botões de Ação */}
-            <Grid item xs={12}>
-              <Divider sx={{ my: 3 }} />
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<CancelIcon />}
-                  onClick={handleCancel}
-                  size="large"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
-                  size="large"
-                  disabled={loading}
-                >
-                  {loading ? 'Salvando...' : 'Salvar Imóvel'}
-                </Button>
-              </Box>
-            </Grid>
+                      <Chip 
+                        size="small" 
+                        label={`${apartment.bathrooms} banheiros`} 
+                        variant="outlined" 
+                      />
+                      <Chip 
+                        size="small" 
+                        label={`${apartment.area}m²`} 
+                        variant="outlined" 
+                      />
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                      {apartment.address}, {apartment.neighborhood}, {apartment.city}-{apartment.state}
+                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      <Chip 
+                        size="small" 
+                        label={apartment.isPublic ? 'Público' : 'Privado'} 
+                        color={apartment.isPublic ? 'success' : 'default'} 
+                        variant="outlined" 
+                      />
+                    </Box>
+                  </CardContent>
+                  <CardActions>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleEditApartment(apartment)}
+                      color="primary"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleManageEditors(apartment)}
+                      color="secondary"
+                    >
+                      <PersonIcon />
+                    </IconButton>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleDeleteApartment(apartment.id)}
+                      color="error"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
-        </form>
+        </TabPanel>
+
+        {/* Tab 3: Dashboard (apenas para corretores) */}
+        {user.userType === 'realtor' && (
+          <TabPanel value={activeTab} index={2}>
+            <Typography variant="h5" gutterBottom>
+              Dashboard de Imóveis
+            </Typography>
+            <Typography variant="body1" color="text.secondary" paragraph>
+              Esta funcionalidade será implementada em breve com gráficos e estatísticas detalhadas.
+            </Typography>
+            {/* Aqui será implementado o dashboard com gráficos */}
+          </TabPanel>
+        )}
       </Paper>
+
+      {/* Dialog para gerenciar editores */}
+      <Dialog open={showEditorsDialog} onClose={() => setShowEditorsDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Gerenciar Editores</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" paragraph>
+            Selecione os usuários que poderão editar este apartamento:
+          </Typography>
+          <List>
+            {mockUsers.map((user) => (
+              <ListItem key={user.id} dense>
+                <Checkbox
+                  edge="start"
+                  checked={selectedEditors.includes(user.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      updateSelectedEditors([...selectedEditors, user.id]);
+                    } else {
+                      updateSelectedEditors(selectedEditors.filter(id => id !== user.id));
+                    }
+                  }}
+                />
+                <ListItemText
+                  primary={user.name}
+                  secondary={`${user.email} (${user.userType === 'realtor' ? 'Corretor' : 'Comprador'})`}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowEditorsDialog(false)}>Cancelar</Button>
+          <Button onClick={handleSaveEditors} variant="contained">Salvar</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
