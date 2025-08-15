@@ -5,17 +5,13 @@ import {
   Typography,
   Box,
   Paper,
-  Tabs,
-  Tab,
   useTheme,
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { Home as HomeIcon, Group as GroupIcon, Person as PersonIcon } from '@mui/icons-material';
 import ApartmentCard from '../../components/ApartmentCard/ApartmentCard';
 import Filters from '../../components/Filters/Filters';
 import { Apartment, FilterOptions, Group } from '../../types';
-import { useAuth } from '../../hooks/useAuth';
 
 // Mock data para demonstração
 const mockApartments: Apartment[] = [
@@ -136,13 +132,11 @@ const mockGroups: Group[] = [
 
 const Home: React.FC = () => {
   const theme = useTheme();
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState(0);
-  const [apartments, setApartments] = useState<Apartment[]>(mockApartments);
+  const [apartments] = useState<Apartment[]>(mockApartments);
   const [filteredApartments, setFilteredApartments] = useState<Apartment[]>(mockApartments);
-  const [groups, setGroups] = useState<Group[]>(mockGroups);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [groups] = useState<Group[]>(mockGroups);
+  const [loading] = useState(false);
+  const [error] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<FilterOptions>({
     priceRange: [0, 2000000],
@@ -153,6 +147,7 @@ const Home: React.FC = () => {
     city: [],
     neighborhood: [],
     groups: [],
+    visibility: [],
   });
 
   useEffect(() => {
@@ -204,25 +199,21 @@ const Home: React.FC = () => {
       );
     }
 
-    setFilteredApartments(filtered);
-  };
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-    
-    // Filtrar apartamentos baseado na aba selecionada
-    if (newValue === 0) {
-      // Todos os apartamentos
-      setFilteredApartments(apartments);
-    } else if (newValue === 1) {
-      // Apenas apartamentos públicos
-      setFilteredApartments(apartments.filter(apt => apt.isPublic));
-    } else if (newValue === 2) {
-      // Apenas apartamentos privados do usuário
-      if (user) {
-        setFilteredApartments(apartments.filter(apt => !apt.isPublic && apt.ownerId === user.id));
-      }
+    // Filtro por visibilidade
+    if (filters.visibility.length > 0) {
+      filtered = filtered.filter(apt => {
+        if (filters.visibility.includes('public') && filters.visibility.includes('private')) {
+          return true; // Mostra todos se ambos estiverem selecionados
+        } else if (filters.visibility.includes('public')) {
+          return apt.isPublic;
+        } else if (filters.visibility.includes('private')) {
+          return !apt.isPublic;
+        }
+        return true;
+      });
     }
+
+    setFilteredApartments(filtered);
   };
 
   const handleFiltersChange = (newFilters: FilterOptions) => {
@@ -239,33 +230,8 @@ const Home: React.FC = () => {
       city: [],
       neighborhood: [],
       groups: [],
+      visibility: [],
     });
-  };
-
-  const getTabLabel = (index: number) => {
-    switch (index) {
-      case 0:
-        return 'Todos os Imóveis';
-      case 1:
-        return 'Imóveis Públicos';
-      case 2:
-        return 'Meus Imóveis';
-      default:
-        return '';
-    }
-  };
-
-  const getTabIcon = (index: number) => {
-    switch (index) {
-      case 0:
-        return <HomeIcon />;
-      case 1:
-        return <GroupIcon />;
-      case 2:
-        return <PersonIcon />;
-      default:
-        return <HomeIcon />;
-    }
   };
 
   return (
@@ -299,30 +265,6 @@ const Home: React.FC = () => {
         groups={groups}
         onClearFilters={handleClearFilters}
       />
-
-      <Paper sx={{ mb: 3 }}>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant="fullWidth"
-          sx={{
-            '& .MuiTab-root': {
-              minHeight: 64,
-              fontSize: '1rem',
-              fontWeight: 600,
-            },
-          }}
-        >
-          {[0, 1, 2].map((index) => (
-            <Tab
-              key={index}
-              label={getTabLabel(index)}
-              icon={getTabIcon(index)}
-              iconPosition="start"
-            />
-          ))}
-        </Tabs>
-      </Paper>
 
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>

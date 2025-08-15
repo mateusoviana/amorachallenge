@@ -102,6 +102,14 @@ const Filters: React.FC<FiltersProps> = ({
     });
   };
 
+  const handleVisibilityChange = (event: SelectChangeEvent<string[]>) => {
+    const value = event.target.value as string[];
+    onFiltersChange({
+      ...filters,
+      visibility: value,
+    });
+  };
+
   const handleAccordionChange = (panel: string) => (
     event: React.SyntheticEvent,
     isExpanded: boolean
@@ -337,6 +345,27 @@ const Filters: React.FC<FiltersProps> = ({
                     {group.name}
                   </MenuItem>
                 ))}
+              </Select>
+            </FormControl>
+
+            {/* Visibilidade */}
+            <FormControl fullWidth>
+              <InputLabel>Visibilidade</InputLabel>
+              <Select
+                multiple
+                value={filters.visibility}
+                onChange={handleVisibilityChange}
+                input={<OutlinedInput label="Visibilidade" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((value) => (
+                      <Chip key={value} label={value === 'public' ? 'Público' : 'Privado'} size="small" />
+                    ))}
+                  </Box>
+                )}
+              >
+                <MenuItem value="public">Público</MenuItem>
+                <MenuItem value="private">Privado</MenuItem>
               </Select>
             </FormControl>
           </Box>

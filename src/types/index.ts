@@ -62,6 +62,7 @@ export interface FilterOptions {
   city: string[];
   neighborhood: string[];
   groups: string[];
+  visibility: string[]; // 'public' | 'private'
 }
 
 // Novos tipos para dashboard
