@@ -57,7 +57,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({ apartment }) => {
       <Box sx={{ position: 'relative' }}>
         <CardMedia
           component="img"
-          height="200"
+          height="140"
           image={apartment.images[0] || 'https://via.placeholder.com/400x200?text=Imóvel+aMORA'}
           alt={apartment.title}
           sx={{ objectFit: 'cover' }}
@@ -77,14 +77,14 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({ apartment }) => {
         </Box>
       </Box>
 
-      <CardContent sx={{ flexGrow: 1, p: 2 }}>
+      <CardContent sx={{ flexGrow: 1, p: 1.5 }}>
         <Typography
-          variant="h6"
+          variant="subtitle1"
           component="h3"
           sx={{
             fontWeight: 600,
             color: theme.palette.secondary.main,
-            mb: 1,
+            mb: 0.5,
             lineHeight: 1.2,
           }}
           noWrap
@@ -93,64 +93,64 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({ apartment }) => {
         </Typography>
 
         <Typography
-          variant="body2"
+          variant="caption"
           color="text.secondary"
-          sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 0.5 }}
+          sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}
         >
           <LocationIcon fontSize="small" />
           {apartment.neighborhood}, {apartment.city}
         </Typography>
 
         <Typography
-          variant="h5"
+          variant="h6"
           component="div"
           sx={{
             fontWeight: 700,
             color: theme.palette.primary.main,
-            mb: 2,
+            mb: 1,
           }}
         >
           {formatPrice(apartment.price)}
         </Typography>
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <BedIcon fontSize="small" color="action" />
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="caption" color="text.secondary">
               {apartment.bedrooms}
             </Typography>
           </Box>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <BathIcon fontSize="small" color="action" />
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="caption" color="text.secondary">
               {apartment.bathrooms}
             </Typography>
           </Box>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <CarIcon fontSize="small" color="action" />
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="caption" color="text.secondary">
               {apartment.parkingSpaces}
             </Typography>
           </Box>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <AreaIcon fontSize="small" color="action" />
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="caption" color="text.secondary">
               {apartment.area}m²
             </Typography>
           </Box>
         </Box>
 
         <Typography
-          variant="body2"
+          variant="caption"
           color="text.secondary"
           sx={{
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             display: '-webkit-box',
-            WebkitLineClamp: 2,
+            WebkitLineClamp: 1,
             WebkitBoxOrient: 'vertical',
           }}
         >
