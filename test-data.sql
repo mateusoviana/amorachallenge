@@ -1,8 +1,8 @@
 -- Inserir usuários de teste
-INSERT INTO users (name, email, user_type) VALUES
-('João Silva', 'joao@teste.com', 'buyer'),
-('Maria Santos', 'maria@teste.com', 'realtor'),
-('Pedro Costa', 'pedro@teste.com', 'buyer');
+INSERT INTO users (name, email, password, user_type) VALUES
+('João Silva', 'joao@teste.com', 'senha123', 'buyer'),
+('Maria Santos', 'maria@teste.com', 'senha123', 'realtor'),
+('Pedro Costa', 'pedro@teste.com', 'senha123', 'buyer');
 
 -- Inserir grupos de teste
 INSERT INTO groups (name, description, is_public, admin_id) VALUES

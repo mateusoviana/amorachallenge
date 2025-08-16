@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { Group, GroupMember } from '../types';
-import { supabase } from '../lib/supabase';
+import { groupService } from '../services/groupService';
 
 export const useGroups = () => {
   const { user } = useAuth();
@@ -19,37 +19,12 @@ export const useGroups = () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
-        .from('group_members')
-        .select(`
-          groups!inner(
-            id,
-            name,
-            description,
-            is_public,
-            created_at,
-            updated_at
-          )
-        `)
-        .eq('user_id', user?.id);
-      
-      if (error) throw error;
-      
-      const groups: Group[] = data?.map(item => {
-        const group = (item as any).groups;
-        return {
-          id: group.id,
-          name: group.name,
-          description: group.description,
-          isPublic: group.is_public,
-          createdAt: new Date(group.created_at),
-          updatedAt: new Date(group.updated_at),
-          members: [],
-          apartments: [],
-        };
-      }) || [];
+      const allGroups = await groupService.getGroups();
+      const userGroups = allGroups.filter(group => 
+        group.members.some(member => member.userId === user?.id)
+      );
 
-      setUserGroups(groups);
+      setUserGroups(userGroups);
     } catch (err) {
       setError('Erro ao carregar grupos');
       console.error('Erro ao buscar grupos:', err);
@@ -62,35 +37,84 @@ export const useGroups = () => {
     try {
       setLoading(true);
       
-      // Criar o grupo
-      const { data: groupResult, error: groupError } = await supabase
-        .from('groups')
-        .insert({
-          name: groupData.name,
-          description: groupData.description,
-          is_public: groupData.isPublic,
-          admin_id: user?.id,
-        })
-        .select()
-        .single();
+      if (!user?.id) {
+        throw new Error('Usuário não encontrado');
+      }
       
-      if (groupError) throw groupError;
-      
-      // Adicionar o usuário como admin do grupo
-      const { error: memberError } = await supabase
-        .from('group_members')
-        .insert({
-          group_id: groupResult.id,
-          user_id: user?.id,
-          role: 'admin',
-        });
-      
-      if (memberError) throw memberError;
+      const result = await groupService.createGroup({
+        ...groupData,
+        adminId: user.id,
+      });
       
       await fetchUserGroups();
-      return groupResult;
+      return result;
     } catch (err) {
-      setError('Erro ao criar grupo');
+      setError('Erro ao criar grupo: ' + (err as Error).message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteGroup = async (groupId: string) => {
+    try {
+      setLoading(true);
+      
+      await groupService.deleteGroup(groupId);
+      await fetchUserGroups();
+      return true;
+    } catch (err) {
+      setError('Erro ao deletar grupo');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addMemberToGroup = async (groupId: string, userId: string, role: 'admin' | 'member' = 'member') => {
+    try {
+      setLoading(true);
+      await groupService.addMemberToGroup(groupId, userId, role);
+      await fetchUserGroups();
+    } catch (err) {
+      setError('Erro ao adicionar membro');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeMemberFromGroup = async (groupId: string, userId: string) => {
+    try {
+      setLoading(true);
+      await groupService.removeMemberFromGroup(groupId, userId);
+      await fetchUserGroups();
+    } catch (err) {
+      setError('Erro ao remover membro');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addApartmentToGroup = async (apartmentId: string, groupId: string) => {
+    try {
+      setLoading(true);
+      await groupService.addApartmentToGroup(apartmentId, groupId);
+    } catch (err) {
+      setError('Erro ao adicionar apartamento ao grupo');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeApartmentFromGroup = async (apartmentId: string, groupId: string) => {
+    try {
+      setLoading(true);
+      await groupService.removeApartmentFromGroup(apartmentId, groupId);
+    } catch (err) {
+      setError('Erro ao remover apartamento do grupo');
       throw err;
     } finally {
       setLoading(false);
@@ -102,6 +126,11 @@ export const useGroups = () => {
     loading,
     error,
     createGroup,
+    deleteGroup,
+    addMemberToGroup,
+    removeMemberFromGroup,
+    addApartmentToGroup,
+    removeApartmentFromGroup,
     refetch: fetchUserGroups,
   };
 };

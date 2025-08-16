@@ -46,85 +46,16 @@ import {
   SwapHoriz as SwapHorizIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
-import { User, Group, Apartment } from '../../types';
+import { useGroups } from '../../hooks/useGroups';
+import { useUserApartments } from '../../hooks/useUserApartments';
+import { Group, Apartment } from '../../types';
 
-// Mock data para demonstração
-const mockGroups: Group[] = [
-  {
-    id: '1',
-    name: 'Grupo Público',
-    description: 'Imóveis públicos disponíveis para todos os usuários',
-    isPublic: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    members: [],
-    apartments: [],
-  },
-  {
-    id: '2',
-    name: 'Meus Favoritos',
-    description: 'Imóveis de interesse pessoal',
-    isPublic: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    members: [],
-    apartments: [],
-  },
-  {
-    id: '3',
-    name: 'Projeto Casa Nova',
-    description: 'Grupo para compra de casa própria',
-    isPublic: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    members: [],
-    apartments: [],
-  },
-];
 
-const mockApartments: Apartment[] = [
-  {
-    id: '1',
-    title: 'Apartamento Moderno no Centro',
-    description: 'Excelente apartamento com acabamento de alto padrão.',
-    price: 450000,
-    address: 'Rua das Flores, 123',
-    neighborhood: 'Centro',
-    city: 'São Paulo',
-    state: 'SP',
-    bedrooms: 2,
-    bathrooms: 2,
-    parkingSpaces: 1,
-    area: 75,
-    isPublic: true,
-    ownerId: '1',
-    owner: {
-      id: '1',
-      name: 'João Silva',
-      email: 'joao@email.com',
-      password: '',
-      userType: 'realtor',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    groups: [],
-    images: ['https://via.placeholder.com/400x200?text=Apartamento+1'],
-    editors: [],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
-
-// Garantir que todos os apartamentos mock tenham a propriedade editors
-const validatedMockApartments = mockApartments.map(apt => ({
-  ...apt,
-  editors: Array.isArray(apt.editors) ? apt.editors : []
-}));
 
 const Profile: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { user, logout, toggleUserType } = useAuth();
+  const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -138,9 +69,9 @@ const Profile: React.FC = () => {
     userType: user?.userType || 'buyer',
   });
 
-  // Estados para gerenciamento de grupos
-  const [groups, setGroups] = useState<Group[]>(mockGroups);
-  const [apartments, setApartments] = useState<Apartment[]>(validatedMockApartments);
+  // Hooks para dados reais
+  const { userGroups, createGroup, deleteGroup } = useGroups();
+  const { userApartments } = useUserApartments();
   const [newGroupDialog, setNewGroupDialog] = useState(false);
   const [newGroupData, setNewGroupData] = useState({
     name: '',
@@ -197,10 +128,7 @@ const Profile: React.FC = () => {
     setEditingProfile(false);
   };
 
-  const handleToggleUserType = () => {
-    toggleUserType();
-    setSuccess('Tipo de usuário alterado com sucesso!');
-  };
+
 
   const handleCreateGroup = async () => {
     if (!newGroupData.name.trim()) {
@@ -212,21 +140,12 @@ const Profile: React.FC = () => {
     setError(null);
 
     try {
-      // Simular criação de grupo
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const newGroup: Group = {
-        id: Date.now().toString(),
+      await createGroup({
         name: newGroupData.name,
         description: newGroupData.description,
         isPublic: newGroupData.isPublic,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        members: [],
-        apartments: [],
-      };
-
-      setGroups(prev => [...prev, newGroup]);
+      });
+      
       setNewGroupDialog(false);
       setNewGroupData({ name: '', description: '', isPublic: false });
       setSuccess('Grupo criado com sucesso!');
@@ -238,10 +157,14 @@ const Profile: React.FC = () => {
     }
   };
 
-  const handleDeleteGroup = (groupId: string) => {
+  const handleDeleteGroup = async (groupId: string) => {
     if (window.confirm('Tem certeza que deseja excluir este grupo?')) {
-      setGroups(prev => prev.filter(group => group.id !== groupId));
-      setSuccess('Grupo excluído com sucesso!');
+      try {
+        await deleteGroup(groupId);
+        setSuccess('Grupo excluído com sucesso!');
+      } catch (err) {
+        setError('Erro ao excluir grupo.');
+      }
     }
   };
 
@@ -289,15 +212,7 @@ const Profile: React.FC = () => {
                 color={user.userType === 'realtor' ? 'primary' : 'secondary'}
                 sx={{ fontWeight: 600 }}
               />
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<SwapHorizIcon />}
-                onClick={handleToggleUserType}
-                sx={{ ml: 1 }}
-              >
-                Alternar Tipo
-              </Button>
+
             </Box>
           </Box>
           <Button
@@ -452,7 +367,7 @@ const Profile: React.FC = () => {
           </Box>
 
           <Grid container spacing={3}>
-            {groups.map((group) => (
+            {userGroups.map((group) => (
               <Grid item xs={12} md={6} lg={4} key={group.id}>
                 <Card>
                   <CardContent>
@@ -499,7 +414,7 @@ const Profile: React.FC = () => {
           </Typography>
 
           <Grid container spacing={3}>
-            {apartments.map((apartment) => (
+            {userApartments.map((apartment) => (
               <Grid item xs={12} md={6} lg={4} key={apartment.id}>
                 <Card>
                   <CardContent>

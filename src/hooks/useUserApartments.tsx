@@ -67,7 +67,7 @@ export const useUserApartments = () => {
           apartments: [],
         })) || [],
         images: apt.images || [],
-        editors: apt.editors || [],
+
         createdAt: new Date(apt.created_at),
         updatedAt: new Date(apt.updated_at),
       })) || [];
@@ -99,7 +99,7 @@ export const useUserApartments = () => {
       if (updates.area) updateData.area = updates.area;
       if (updates.isPublic !== undefined) updateData.is_public = updates.isPublic;
       if (updates.images) updateData.images = updates.images;
-      if (updates.editors) updateData.editors = updates.editors;
+
       
       const { error } = await supabase
         .from('apartments')
@@ -143,6 +143,13 @@ export const useUserApartments = () => {
     try {
       setLoading(true);
       
+      if (!user?.id) {
+        throw new Error('Usuário não encontrado');
+      }
+      
+      console.log('Criando apartamento:', apartment);
+      console.log('User ID:', user.id);
+      
       const { data, error } = await supabase
         .from('apartments')
         .insert({
@@ -160,17 +167,39 @@ export const useUserApartments = () => {
           is_public: apartment.isPublic,
           owner_id: apartment.ownerId,
           images: apartment.images,
-          editors: apartment.editors,
         })
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao criar apartamento:', error);
+        throw error;
+      }
+      
+      console.log('Apartamento criado:', data);
+      
+      // Associar apartamento aos grupos selecionados
+      if (apartment.groups && apartment.groups.length > 0) {
+        const groupAssociations = apartment.groups.map(group => ({
+          apartment_id: data.id,
+          group_id: group.id
+        }));
+        
+        const { error: groupError } = await supabase
+          .from('apartment_groups')
+          .insert(groupAssociations);
+          
+        if (groupError) {
+          console.error('Erro ao associar grupos:', groupError);
+          throw groupError;
+        }
+      }
       
       await fetchUserApartments();
       return data;
     } catch (err) {
-      setError('Erro ao adicionar apartamento');
+      console.error('Erro completo:', err);
+      setError('Erro ao adicionar apartamento: ' + (err as Error).message);
       throw err;
     } finally {
       setLoading(false);

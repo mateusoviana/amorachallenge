@@ -26,8 +26,6 @@ export interface Apartment {
   owner: User;
   groups: Group[];
   images: string[];
-  // Novos campos para permissões de edição
-  editors: string[]; // IDs dos usuários que podem editar
   createdAt: Date;
   updatedAt: Date;
 }

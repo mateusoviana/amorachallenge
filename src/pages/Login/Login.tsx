@@ -24,7 +24,6 @@ const Login: React.FC = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    userType: 'buyer' as 'buyer' | 'realtor',
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -84,17 +83,7 @@ const Login: React.FC = () => {
               placeholder="Sua senha"
             />
 
-            <FormControl fullWidth>
-              <InputLabel>Tipo de Usuário</InputLabel>
-              <Select
-                value={formData.userType}
-                label="Tipo de Usuário"
-                onChange={(e) => setFormData(prev => ({ ...prev, userType: e.target.value as 'buyer' | 'realtor' }))}
-              >
-                <MenuItem value="buyer">Comprador</MenuItem>
-                <MenuItem value="realtor">Corretor</MenuItem>
-              </Select>
-            </FormControl>
+
 
             <Button
               type="submit"
@@ -118,13 +107,13 @@ const Login: React.FC = () => {
 
         <Box sx={{ mt: 4, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
-            Usuários de teste:
+            Acesso seguro:
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-            • Comprador: qualquer email + senha + tipo "Comprador"
+            • Use suas credenciais cadastradas no sistema
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-            • Corretor: qualquer email + senha + tipo "Corretor"
+            • O tipo de usuário é definido no seu perfil
           </Typography>
         </Box>
       </Paper>

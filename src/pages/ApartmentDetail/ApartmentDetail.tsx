@@ -43,71 +43,8 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { Apartment, Group } from '../../types';
-
-// Mock data para demonstração
-const mockApartment: Apartment = {
-  id: '1',
-  title: 'Apartamento Moderno no Centro',
-  description: 'Excelente apartamento com acabamento de alto padrão, localizado no coração da cidade. Este imóvel oferece uma localização privilegiada com fácil acesso a transporte público, shoppings, restaurantes e todas as comodidades urbanas. O apartamento foi reformado recentemente com materiais de primeira linha, incluindo piso laminado, armários planejados na cozinha e banheiros, e acabamento premium em todos os ambientes.',
-  price: 450000,
-  address: 'Rua das Flores, 123',
-  neighborhood: 'Centro',
-  city: 'São Paulo',
-  state: 'SP',
-  bedrooms: 2,
-  bathrooms: 2,
-  parkingSpaces: 1,
-  area: 75,
-  isPublic: true,
-  ownerId: '1',
-  owner: {
-    id: '1',
-    name: 'João Silva',
-    email: 'joao@email.com',
-    password: '',
-    userType: 'realtor',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  groups: [],
-  images: ['https://via.placeholder.com/400x200?text=Apartamento+1'],
-  editors: [],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
-const mockGroups: Group[] = [
-  {
-    id: '1',
-    name: 'Grupo Público',
-    description: 'Imóveis públicos disponíveis para todos os usuários',
-    isPublic: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    members: [],
-    apartments: [],
-  },
-  {
-    id: '2',
-    name: 'Meus Favoritos',
-    description: 'Imóveis de interesse pessoal',
-    isPublic: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    members: [],
-    apartments: [],
-  },
-  {
-    id: '3',
-    name: 'Projeto Casa Nova',
-    description: 'Grupo para compra de casa própria',
-    isPublic: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    members: [],
-    apartments: [],
-  },
-];
+import { apartmentService } from '../../services/apartmentService';
+import { groupService } from '../../services/groupService';
 
 const ApartmentDetail: React.FC = () => {
   const theme = useTheme();
@@ -123,13 +60,30 @@ const ApartmentDetail: React.FC = () => {
   const [selectedGroup, setSelectedGroup] = useState<string>('');
 
   useEffect(() => {
-    // Simular carregamento de dados
-    setTimeout(() => {
-      setApartment(mockApartment);
-      setGroups(mockGroups);
-      setLoading(false);
-    }, 1000);
+    loadData();
   }, [id]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [apartmentData, groupsData] = await Promise.all([
+        apartmentService.getApartmentById(id!),
+        groupService.getGroups()
+      ]);
+      
+      if (apartmentData) {
+        setApartment(apartmentData);
+        setGroups(groupsData);
+      } else {
+        setError('Apartamento não encontrado');
+      }
+    } catch (err) {
+      setError('Erro ao carregar apartamento');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {

@@ -27,15 +27,7 @@ import {
   CardContent,
   CardActions,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  Checkbox,
+
 } from '@mui/material';
 import {
   Save as SaveIcon,
@@ -46,12 +38,12 @@ import {
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
   Group as GroupIcon,
-  Person as PersonIcon,
+
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { useGroups } from '../../hooks/useGroups';
 import { useUserApartments } from '../../hooks/useUserApartments';
-import { Apartment, Group, User } from '../../types';
+import { Apartment, Group } from '../../types';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -87,30 +79,7 @@ const AddApartment: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
-  const [showEditorsDialog, setShowEditorsDialog] = useState(false);
-  const [selectedEditors, setSelectedEditors] = useState<string[]>([]);
 
-  // Mock de usuários para demonstração
-  const mockUsers: User[] = [
-    { id: '1', name: 'João Silva', email: 'joao@email.com', password: '', userType: 'buyer', createdAt: new Date(), updatedAt: new Date() },
-    { id: '2', name: 'Maria Santos', email: 'maria@email.com', password: '', userType: 'buyer', createdAt: new Date(), updatedAt: new Date() },
-    { id: '3', name: 'Pedro Costa', email: 'pedro@email.com', password: '', userType: 'realtor', createdAt: new Date(), updatedAt: new Date() },
-  ];
-
-  // Função para garantir que selectedEditors seja sempre um array válido
-  const ensureSelectedEditorsIsArray = (editors: any): string[] => {
-    if (Array.isArray(editors)) {
-      return editors;
-    }
-    console.warn('editors não é um array, inicializando como array vazio:', editors);
-    return [];
-  };
-
-  // Função para atualizar selectedEditors garantindo que seja sempre um array
-  const updateSelectedEditors = (newEditors: string[]) => {
-    const validEditors = ensureSelectedEditorsIsArray(newEditors);
-    setSelectedEditors(validEditors);
-  };
 
   const [formData, setFormData] = useState({
     title: '',
@@ -216,7 +185,7 @@ const AddApartment: React.FC = () => {
         ownerId: user?.id || '',
         groups: userGroups.filter(group => formData.selectedGroups.includes(group.id)),
         images: formData.images,
-        editors: [],
+
       };
 
       await addApartment(newApartment);
@@ -289,8 +258,7 @@ const AddApartment: React.FC = () => {
         isPublic: formData.isPublic,
         groups: userGroups.filter(group => formData.selectedGroups.includes(group.id)),
         images: formData.images,
-        // Preservar os editores existentes
-        editors: editingApartment.editors,
+
       };
 
       await updateApartment(editingApartment.id, updates);
@@ -333,40 +301,7 @@ const AddApartment: React.FC = () => {
     }
   };
 
-  const handleManageEditors = (apartment: Apartment) => {
-    console.log('Gerenciando editores para apartamento:', apartment);
-    console.log('Editores atuais:', apartment.editors);
-    
-    // Garantir que apartment.editors existe e é um array
-    const currentEditors = ensureSelectedEditorsIsArray(apartment.editors);
-    console.log('Editores processados:', currentEditors);
-    
-    setSelectedEditors(currentEditors);
-    setEditingApartment(apartment);
-    setShowEditorsDialog(true);
-  };
 
-  const handleSaveEditors = async () => {
-    if (!editingApartment) return;
-
-    try {
-      // Garantir que selectedEditors seja um array válido
-      const validEditors = ensureSelectedEditorsIsArray(selectedEditors);
-      
-      console.log('Salvando editores:', validEditors);
-      console.log('Para apartamento:', editingApartment.id);
-      
-      await updateApartment(editingApartment.id, { editors: validEditors });
-      setShowEditorsDialog(false);
-      setSuccess('Editores atualizados com sucesso!');
-      
-      // Atualizar o apartamento localmente para refletir as mudanças
-      setEditingApartment(prev => prev ? { ...prev, editors: validEditors } : null);
-    } catch (err) {
-      console.error('Erro ao salvar editores:', err);
-      setError('Erro ao atualizar editores');
-    }
-  };
 
   const handleCancel = () => {
     navigate('/');
@@ -771,13 +706,7 @@ const AddApartment: React.FC = () => {
                     >
                       <EditIcon />
                     </IconButton>
-                    <IconButton 
-                      size="small" 
-                      onClick={() => handleManageEditors(apartment)}
-                      color="secondary"
-                    >
-                      <PersonIcon />
-                    </IconButton>
+
                     <IconButton 
                       size="small" 
                       onClick={() => handleDeleteApartment(apartment.id)}
@@ -806,40 +735,7 @@ const AddApartment: React.FC = () => {
         )}
       </Paper>
 
-      {/* Dialog para gerenciar editores */}
-      <Dialog open={showEditorsDialog} onClose={() => setShowEditorsDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Gerenciar Editores</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" paragraph>
-            Selecione os usuários que poderão editar este apartamento:
-          </Typography>
-          <List>
-            {mockUsers.map((user) => (
-              <ListItem key={user.id} dense>
-                <Checkbox
-                  edge="start"
-                  checked={selectedEditors.includes(user.id)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      updateSelectedEditors([...selectedEditors, user.id]);
-                    } else {
-                      updateSelectedEditors(selectedEditors.filter(id => id !== user.id));
-                    }
-                  }}
-                />
-                <ListItemText
-                  primary={user.name}
-                  secondary={`${user.email} (${user.userType === 'realtor' ? 'Corretor' : 'Comprador'})`}
-                />
-              </ListItem>
-            ))}
-          </List>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowEditorsDialog(false)}>Cancelar</Button>
-          <Button onClick={handleSaveEditors} variant="contained">Salvar</Button>
-        </DialogActions>
-      </Dialog>
+
     </Container>
   );
 };

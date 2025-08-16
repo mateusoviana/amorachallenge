@@ -7,7 +7,6 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   register: (userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) => Promise<boolean>;
-  toggleUserType: () => void;
   loading: boolean;
 }
 
@@ -42,11 +41,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      // Buscar usuário no Supabase
+      // Buscar usuário com email e senha
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
+        .eq('password', password)
         .single();
       
       if (error || !data) {
@@ -88,6 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .insert({
           name: userData.name,
           email: userData.email,
+          password: userData.password,
           user_type: userData.userType,
         })
         .select()
@@ -118,33 +119,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const toggleUserType = async () => {
-    if (user) {
-      const newUserType = user.userType === 'buyer' ? 'realtor' : 'buyer';
-      
-      const { error } = await supabase
-        .from('users')
-        .update({ user_type: newUserType })
-        .eq('id', user.id);
-      
-      if (!error) {
-        const updatedUser: User = {
-          ...user,
-          userType: newUserType,
-          updatedAt: new Date(),
-        };
-        setUser(updatedUser);
-        localStorage.setItem('amora_user', JSON.stringify(updatedUser));
-      }
-    }
-  };
+
 
   const value: AuthContextType = {
     user,
     login,
     logout,
     register,
-    toggleUserType,
     loading,
   };
 
