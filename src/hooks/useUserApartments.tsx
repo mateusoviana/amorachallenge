@@ -100,13 +100,38 @@ export const useUserApartments = () => {
       if (updates.isPublic !== undefined) updateData.is_public = updates.isPublic;
       if (updates.images) updateData.images = updates.images;
 
-      
+      // Atualizar dados básicos do apartamento
       const { error } = await supabase
         .from('apartments')
         .update(updateData)
         .eq('id', id);
       
       if (error) throw error;
+      
+      // Atualizar associações de grupos se fornecidas
+      if (updates.groups !== undefined) {
+        // Remover todas as associações existentes
+        const { error: deleteError } = await supabase
+          .from('apartment_groups')
+          .delete()
+          .eq('apartment_id', id);
+        
+        if (deleteError) throw deleteError;
+        
+        // Adicionar novas associações
+        if (updates.groups.length > 0) {
+          const groupAssociations = updates.groups.map(group => ({
+            apartment_id: id,
+            group_id: group.id
+          }));
+          
+          const { error: insertError } = await supabase
+            .from('apartment_groups')
+            .insert(groupAssociations);
+          
+          if (insertError) throw insertError;
+        }
+      }
       
       await fetchUserApartments();
       return true;

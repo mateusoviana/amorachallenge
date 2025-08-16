@@ -389,8 +389,8 @@ const Profile: React.FC = () => {
                     </Typography>
                   </CardContent>
                   <CardActions>
-                    <Button size="small" onClick={() => navigate('/')}>
-                      Ver Imóveis
+                    <Button size="small" onClick={() => navigate(`/group/${group.id}`)}>
+                      Ver Detalhes
                     </Button>
                     <IconButton
                       size="small"

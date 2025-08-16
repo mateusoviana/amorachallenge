@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -56,6 +57,7 @@ interface CreateGroupData {
 
 const Groups: React.FC = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { userGroups, createGroup, loading, error: groupError } = useGroups();
 
@@ -129,7 +131,20 @@ const Groups: React.FC = () => {
           <Grid container spacing={3}>
             {userGroups.map((group) => (
               <Grid item xs={12} md={6} lg={4} key={group.id}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Card 
+                  sx={{ 
+                    height: '100%', 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      boxShadow: theme.shadows[4],
+                      transform: 'translateY(-2px)',
+                      transition: 'all 0.2s ease-in-out'
+                    }
+                  }}
+                  onClick={() => navigate(`/group/${group.id}`)}
+                >
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                       <GroupIcon sx={{ mr: 1, color: theme.palette.secondary.main }} />

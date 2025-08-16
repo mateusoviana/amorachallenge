@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { Group, GroupMember, User } from '../types';
+import { Group, GroupMember, User, Apartment } from '../types';
 
 export const groupService = {
   // Buscar todos os grupos
@@ -227,7 +227,7 @@ export const groupService = {
   },
 
   // Listar apartamentos por grupo
-  async getApartmentsByGroup(groupId: string): Promise<any[]> {
+  async getApartmentsByGroup(groupId: string): Promise<Apartment[]> {
     const { data, error } = await supabase
       .from('apartment_groups')
       .select(`
@@ -240,6 +240,37 @@ export const groupService = {
     
     if (error) throw error;
     
-    return data?.map(item => (item as any).apartments) || [];
+    return data?.map(item => {
+      const apt = (item as any).apartments;
+      return {
+        id: apt.id,
+        title: apt.title,
+        description: apt.description,
+        price: apt.price,
+        address: apt.address,
+        neighborhood: apt.neighborhood,
+        city: apt.city,
+        state: apt.state,
+        bedrooms: apt.bedrooms,
+        bathrooms: apt.bathrooms,
+        parkingSpaces: apt.parking_spaces,
+        area: apt.area,
+        isPublic: apt.is_public,
+        ownerId: apt.owner_id,
+        owner: {
+          id: apt.owner.id,
+          name: apt.owner.name,
+          email: apt.owner.email,
+          password: '',
+          userType: apt.owner.user_type,
+          createdAt: new Date(apt.owner.created_at),
+          updatedAt: new Date(apt.owner.updated_at),
+        },
+        groups: [],
+        images: apt.images || [],
+        createdAt: new Date(apt.created_at),
+        updatedAt: new Date(apt.updated_at),
+      };
+    }) || [];
   }
 };
