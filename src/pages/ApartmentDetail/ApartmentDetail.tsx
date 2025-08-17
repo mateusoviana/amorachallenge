@@ -183,9 +183,24 @@ const ApartmentDetail: React.FC = () => {
               />
             </Box>
 
-            <Typography variant="h3" component="div" sx={{ fontWeight: 700, color: theme.palette.primary.main, mb: 3 }}>
+            <Typography variant="h3" component="div" sx={{ fontWeight: 700, color: theme.palette.primary.main, mb: 1 }}>
               {formatPrice(apartment.price)}
             </Typography>
+
+            {(apartment.condominiumFee > 0 || apartment.iptu > 0) && (
+              <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                {apartment.condominiumFee > 0 && (
+                  <Typography variant="body1" color="text.secondary">
+                    Condomínio: {formatPrice(apartment.condominiumFee)}/mês
+                  </Typography>
+                )}
+                {apartment.iptu > 0 && (
+                  <Typography variant="body1" color="text.secondary">
+                    IPTU: {formatPrice(apartment.iptu)}/ano
+                  </Typography>
+                )}
+              </Box>
+            )}
 
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
               {apartment.description}

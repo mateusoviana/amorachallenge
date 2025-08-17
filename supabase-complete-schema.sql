@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS apartments (
     title VARCHAR NOT NULL,
     description TEXT NOT NULL,
     price DECIMAL(12,2) NOT NULL,
+    condominium_fee INTEGER DEFAULT 0,
+    iptu INTEGER DEFAULT 0,
     address VARCHAR NOT NULL,
     neighborhood VARCHAR NOT NULL,
     city VARCHAR NOT NULL,
@@ -110,6 +112,12 @@ DROP TRIGGER IF EXISTS update_apartments_updated_at ON apartments;
 CREATE TRIGGER update_apartments_updated_at
     BEFORE UPDATE ON apartments
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ================================
+-- Comentários das colunas
+-- ================================
+COMMENT ON COLUMN apartments.condominium_fee IS 'Taxa de condomínio mensal em reais';
+COMMENT ON COLUMN apartments.iptu IS 'Valor do IPTU anual em reais';
 
 -- ================================
 -- Dados de teste
