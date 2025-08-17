@@ -271,6 +271,8 @@ export const groupService = {
         title: apt.title,
         description: apt.description,
         price: apt.price,
+        condominiumFee: apt.condominium_fee || 0,
+        iptu: apt.iptu || 0,
         address: apt.address,
         neighborhood: apt.neighborhood,
         city: apt.city,

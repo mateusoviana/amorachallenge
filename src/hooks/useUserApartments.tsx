@@ -37,6 +37,8 @@ export const useUserApartments = () => {
         title: apt.title,
         description: apt.description,
         price: apt.price,
+        condominiumFee: apt.condominium_fee || 0,
+        iptu: apt.iptu || 0,
         address: apt.address,
         neighborhood: apt.neighborhood,
         city: apt.city,
@@ -89,6 +91,8 @@ export const useUserApartments = () => {
       if (updates.title) updateData.title = updates.title;
       if (updates.description) updateData.description = updates.description;
       if (updates.price) updateData.price = updates.price;
+      if (updates.condominiumFee !== undefined) updateData.condominium_fee = updates.condominiumFee;
+      if (updates.iptu !== undefined) updateData.iptu = updates.iptu;
       if (updates.address) updateData.address = updates.address;
       if (updates.neighborhood) updateData.neighborhood = updates.neighborhood;
       if (updates.city) updateData.city = updates.city;
@@ -181,6 +185,8 @@ export const useUserApartments = () => {
           title: apartment.title,
           description: apartment.description,
           price: apartment.price,
+          condominium_fee: apartment.condominiumFee,
+          iptu: apartment.iptu,
           address: apartment.address,
           neighborhood: apartment.neighborhood,
           city: apartment.city,

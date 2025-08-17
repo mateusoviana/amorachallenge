@@ -13,6 +13,8 @@ export interface Apartment {
   title: string;
   description: string;
   price: number;
+  condominiumFee: number;
+  iptu: number;
   address: string;
   neighborhood: string;
   city: string;

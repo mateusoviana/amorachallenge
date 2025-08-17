@@ -15,7 +15,7 @@ A aMORA é uma plataforma completa que permite:
 
 ### 🏘️ Sistema de Imóveis
 - Cadastro completo de apartamentos e casas
-- **Importação automática via link** (QuintoAndar)
+- **Importação automática via link** (QuintoAndar e OLX)
 - Sistema de imagens e galeria
 - Filtros avançados por preço, área, quartos, localização
 - Visualização detalhada de cada imóvel
@@ -224,7 +224,8 @@ Para dúvidas ou suporte:
 - [ ] Sistema de notificações
 - [ ] Chat entre usuários
 - [ ] Sistema de avaliações
-- [ ] **Expansão da importação**: OLX, Viva Real, ZAP Imóveis
+- [x] **Expansão da importação**: OLX ✅
+- [ ] **Próximas plataformas**: Viva Real, ZAP Imóveis
 - [ ] Sistema de favoritos
 - [ ] Histórico de visualizações
 - [ ] Relatórios e analytics

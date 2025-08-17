@@ -88,6 +88,8 @@ const AddApartment: React.FC = () => {
     title: '',
     description: '',
     price: '',
+    condominiumFee: '',
+    iptu: '',
     address: '',
     neighborhood: '',
     city: '',
@@ -176,6 +178,8 @@ const AddApartment: React.FC = () => {
         title: formData.title,
         description: formData.description,
         price: parseFloat(formData.price),
+        condominiumFee: parseFloat(formData.condominiumFee) || 0,
+        iptu: parseFloat(formData.iptu) || 0,
         address: formData.address,
         neighborhood: formData.neighborhood,
         city: formData.city,
@@ -200,6 +204,8 @@ const AddApartment: React.FC = () => {
         title: '',
         description: '',
         price: '',
+        condominiumFee: '',
+        iptu: '',
         address: '',
         neighborhood: '',
         city: '',
@@ -226,6 +232,8 @@ const AddApartment: React.FC = () => {
       title: apartment.title,
       description: apartment.description,
       price: apartment.price.toString(),
+      condominiumFee: apartment.condominiumFee.toString(),
+      iptu: apartment.iptu.toString(),
       address: apartment.address,
       neighborhood: apartment.neighborhood,
       city: apartment.city,
@@ -250,6 +258,8 @@ const AddApartment: React.FC = () => {
         title: formData.title,
         description: formData.description,
         price: parseFloat(formData.price),
+        condominiumFee: parseFloat(formData.condominiumFee) || 0,
+        iptu: parseFloat(formData.iptu) || 0,
         address: formData.address,
         neighborhood: formData.neighborhood,
         city: formData.city,
@@ -273,6 +283,8 @@ const AddApartment: React.FC = () => {
         title: '',
         description: '',
         price: '',
+        condominiumFee: '',
+        iptu: '',
         address: '',
         neighborhood: '',
         city: '',
@@ -316,8 +328,8 @@ const AddApartment: React.FC = () => {
       return;
     }
 
-    if (!scrapingService.isValidQuintoAndarUrl(importUrl)) {
-      setError('URL deve ser do QuintoAndar (quintoandar.com.br)');
+    if (!scrapingService.isValidQuintoAndarUrl(importUrl) && !scrapingService.isValidOlxUrl(importUrl)) {
+      setError('URL deve ser do QuintoAndar ou OLX');
       return;
     }
 
@@ -325,13 +337,15 @@ const AddApartment: React.FC = () => {
     setError(null);
 
     try {
-      const scrapedData = await scrapingService.scrapeQuintoAndarListing(importUrl);
+      const scrapedData = await scrapingService.scrapeApartmentListing(importUrl);
       
       // Preencher formulário com dados extraídos
       setFormData({
         title: scrapedData.title,
         description: scrapedData.description,
         price: scrapedData.price.toString(),
+        condominiumFee: scrapedData.condominiumFee.toString(),
+        iptu: scrapedData.iptu.toString(),
         address: scrapedData.address,
         neighborhood: scrapedData.neighborhood,
         city: scrapedData.city,
@@ -436,7 +450,7 @@ const AddApartment: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
                   label="Preço (R$)"
@@ -445,6 +459,34 @@ const AddApartment: React.FC = () => {
                   required
                   type="number"
                   placeholder="450000"
+                  InputProps={{
+                    startAdornment: <Typography variant="body2" sx={{ mr: 1 }}>R$</Typography>,
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Condomínio (R$)"
+                  value={formData.condominiumFee}
+                  onChange={(e) => handleInputChange('condominiumFee', e.target.value)}
+                  type="number"
+                  placeholder="500"
+                  InputProps={{
+                    startAdornment: <Typography variant="body2" sx={{ mr: 1 }}>R$</Typography>,
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="IPTU (R$)"
+                  value={formData.iptu}
+                  onChange={(e) => handleInputChange('iptu', e.target.value)}
+                  type="number"
+                  placeholder="1200"
                   InputProps={{
                     startAdornment: <Typography variant="body2" sx={{ mr: 1 }}>R$</Typography>,
                   }}
@@ -661,6 +703,8 @@ const AddApartment: React.FC = () => {
                           title: '',
                           description: '',
                           price: '',
+                          condominiumFee: '',
+                          iptu: '',
                           address: '',
                           neighborhood: '',
                           city: '',
@@ -710,7 +754,7 @@ const AddApartment: React.FC = () => {
             </Typography>
             
             <Alert severity="info" sx={{ mb: 3 }}>
-              Cole o link de um imóvel do QuintoAndar para importar automaticamente as informações.
+              Cole o link de um imóvel do QuintoAndar ou OLX para importar automaticamente as informações.
             </Alert>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -719,8 +763,8 @@ const AddApartment: React.FC = () => {
                 label="URL do Imóvel (QuintoAndar)"
                 value={importUrl}
                 onChange={(e) => setImportUrl(e.target.value)}
-                placeholder="https://www.quintoandar.com.br/imovel/..."
-                helperText="Exemplo: https://www.quintoandar.com.br/imovel/apartamento-2-quartos-jardins-sao-paulo"
+                placeholder="https://www.quintoandar.com.br/imovel/... ou https://sp.olx.com.br/imoveis/..."
+                helperText="Suporta links do QuintoAndar e OLX"
               />
               
               <Button

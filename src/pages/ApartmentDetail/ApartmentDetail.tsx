@@ -193,6 +193,22 @@ const ApartmentDetail: React.FC = () => {
               <FinancingCalculator apartmentPrice={apartment.price} />
             </Box>
 
+            {/* Informações de Condomínio e IPTU */}
+            {(apartment.condominiumFee > 0 || apartment.iptu > 0) && (
+              <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                {apartment.condominiumFee > 0 && (
+                  <Typography variant="body1" color="text.secondary">
+                    Condomínio: {formatPrice(apartment.condominiumFee)}/mês
+                  </Typography>
+                )}
+                {apartment.iptu > 0 && (
+                  <Typography variant="body1" color="text.secondary">
+                    IPTU: {formatPrice(apartment.iptu)}/ano
+                  </Typography>
+                )}
+              </Box>
+            )}
+
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
               {apartment.description}
             </Typography>

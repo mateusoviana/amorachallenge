@@ -107,11 +107,26 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({ apartment }) => {
           sx={{
             fontWeight: 700,
             color: theme.palette.primary.main,
-            mb: 1,
+            mb: 0.5,
           }}
         >
           {formatPrice(apartment.price)}
         </Typography>
+
+        {(apartment.condominiumFee > 0 || apartment.iptu > 0) && (
+          <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+            {apartment.condominiumFee > 0 && (
+              <Typography variant="caption" color="text.secondary">
+                Cond: {formatPrice(apartment.condominiumFee)}
+              </Typography>
+            )}
+            {apartment.iptu > 0 && (
+              <Typography variant="caption" color="text.secondary">
+                IPTU: {formatPrice(apartment.iptu)}
+              </Typography>
+            )}
+          </Box>
+        )}
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
