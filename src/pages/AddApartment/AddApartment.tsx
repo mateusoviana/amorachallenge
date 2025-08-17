@@ -38,12 +38,13 @@ import {
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
   Group as GroupIcon,
-
+  Link as LinkIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { useGroups } from '../../hooks/useGroups';
 import { useUserApartments } from '../../hooks/useUserApartments';
 import { Apartment, Group } from '../../types';
+import { scrapingService } from '../../services/scrapingService';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -79,6 +80,8 @@ const AddApartment: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
+  const [importUrl, setImportUrl] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
 
 
   const [formData, setFormData] = useState({
@@ -307,6 +310,51 @@ const AddApartment: React.FC = () => {
     navigate('/');
   };
 
+  const handleImportFromUrl = async () => {
+    if (!importUrl.trim()) {
+      setError('Digite uma URL válida');
+      return;
+    }
+
+    if (!scrapingService.isValidQuintoAndarUrl(importUrl)) {
+      setError('URL deve ser do QuintoAndar (quintoandar.com.br)');
+      return;
+    }
+
+    setIsImporting(true);
+    setError(null);
+
+    try {
+      const scrapedData = await scrapingService.scrapeQuintoAndarListing(importUrl);
+      
+      // Preencher formulário com dados extraídos
+      setFormData({
+        title: scrapedData.title,
+        description: scrapedData.description,
+        price: scrapedData.price.toString(),
+        address: scrapedData.address,
+        neighborhood: scrapedData.neighborhood,
+        city: scrapedData.city,
+        state: scrapedData.state,
+        bedrooms: scrapedData.bedrooms.toString(),
+        bathrooms: scrapedData.bathrooms.toString(),
+        parkingSpaces: scrapedData.parkingSpaces.toString(),
+        area: scrapedData.area.toString(),
+        isPublic: false,
+        selectedGroups: [],
+        images: scrapedData.images,
+      });
+
+      setImportUrl('');
+      setSuccess('Dados importados com sucesso! Revise as informações antes de salvar.');
+      setActiveTab(0); // Ir para aba de cadastro
+    } catch (err: any) {
+      setError(err.message || 'Erro ao importar dados do imóvel');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   if (!user) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
@@ -347,6 +395,7 @@ const AddApartment: React.FC = () => {
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={activeTab} onChange={handleTabChange} aria-label="apartment management tabs">
             <Tab label="Cadastrar/Editar" />
+            <Tab label="Importar via Link" />
             <Tab label="Meus Imóveis" />
             {user.userType === 'realtor' && <Tab label="Dashboard" />}
           </Tabs>
@@ -653,8 +702,58 @@ const AddApartment: React.FC = () => {
           </form>
         </TabPanel>
 
-        {/* Tab 2: Meus Imóveis */}
+        {/* Tab 2: Importar via Link */}
         <TabPanel value={activeTab} index={1}>
+          <Box sx={{ maxWidth: 600, mx: 'auto' }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 3, color: theme.palette.secondary.main, textAlign: 'center' }}>
+              Importar Imóvel via Link
+            </Typography>
+            
+            <Alert severity="info" sx={{ mb: 3 }}>
+              Cole o link de um imóvel do QuintoAndar para importar automaticamente as informações.
+            </Alert>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                fullWidth
+                label="URL do Imóvel (QuintoAndar)"
+                value={importUrl}
+                onChange={(e) => setImportUrl(e.target.value)}
+                placeholder="https://www.quintoandar.com.br/imovel/..."
+                helperText="Exemplo: https://www.quintoandar.com.br/imovel/apartamento-2-quartos-jardins-sao-paulo"
+              />
+              
+              <Button
+                variant="contained"
+                startIcon={isImporting ? <CircularProgress size={20} /> : <LinkIcon />}
+                onClick={handleImportFromUrl}
+                disabled={isImporting || !importUrl.trim()}
+                size="large"
+                sx={{ alignSelf: 'center', minWidth: 200 }}
+              >
+                {isImporting ? 'Importando...' : 'Importar Dados'}
+              </Button>
+            </Box>
+
+            <Box sx={{ mt: 4, p: 3, bgcolor: 'grey.50', borderRadius: 2 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                Como funciona:
+              </Typography>
+              <Typography variant="body2" component="div">
+                <ol style={{ paddingLeft: 20, margin: 0 }}>
+                  <li>Copie o link do imóvel no site do QuintoAndar</li>
+                  <li>Cole o link no campo acima</li>
+                  <li>Clique em "Importar Dados"</li>
+                  <li>Revise as informações na aba "Cadastrar/Editar"</li>
+                  <li>Ajuste os dados se necessário e salve o imóvel</li>
+                </ol>
+              </Typography>
+            </Box>
+          </Box>
+        </TabPanel>
+
+        {/* Tab 3: Meus Imóveis */}
+        <TabPanel value={activeTab} index={2}>
           <Grid container spacing={3}>
             {userApartments.map((apartment) => (
               <Grid item xs={12} sm={6} md={4} key={apartment.id}>
@@ -721,9 +820,9 @@ const AddApartment: React.FC = () => {
           </Grid>
         </TabPanel>
 
-        {/* Tab 3: Dashboard (apenas para corretores) */}
+        {/* Tab 4: Dashboard (apenas para corretores) */}
         {user.userType === 'realtor' && (
-          <TabPanel value={activeTab} index={2}>
+          <TabPanel value={activeTab} index={3}>
             <Typography variant="h5" gutterBottom>
               Dashboard de Imóveis
             </Typography>

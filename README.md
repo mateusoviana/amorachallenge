@@ -15,6 +15,7 @@ A aMORA é uma plataforma completa que permite:
 
 ### 🏘️ Sistema de Imóveis
 - Cadastro completo de apartamentos e casas
+- **Importação automática via link** (QuintoAndar)
 - Sistema de imagens e galeria
 - Filtros avançados por preço, área, quartos, localização
 - Visualização detalhada de cada imóvel
@@ -160,7 +161,15 @@ Crie um arquivo `.env` na raiz do projeto:
 ```env
 REACT_APP_API_URL=http://localhost:3001
 REACT_APP_APP_NAME=aMORA
+REACT_APP_SUPABASE_URL=sua_url_supabase
+REACT_APP_SUPABASE_ANON_KEY=sua_chave_supabase
+REACT_APP_SCRAPINGBEE_API_KEY=sua_chave_scrapingbee
 ```
+
+**Para usar a importação via link:**
+1. Crie uma conta gratuita no [ScrapingBee](https://www.scrapingbee.com/)
+2. Obtenha sua API Key
+3. Configure a variável `REACT_APP_SCRAPINGBEE_API_KEY`
 
 ### Tema Personalizado
 O tema pode ser customizado editando `src/theme/index.ts`:
@@ -215,7 +224,7 @@ Para dúvidas ou suporte:
 - [ ] Sistema de notificações
 - [ ] Chat entre usuários
 - [ ] Sistema de avaliações
-- [ ] Integração com APIs de imóveis
+- [ ] **Expansão da importação**: OLX, Viva Real, ZAP Imóveis
 - [ ] Sistema de favoritos
 - [ ] Histórico de visualizações
 - [ ] Relatórios e analytics
