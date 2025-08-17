@@ -47,25 +47,29 @@ const Header: React.FC = () => {
     <AppBar 
       position="static" 
       sx={{ 
-        background: `linear-gradient(90deg, ${theme.palette.secondary.main} 0%, ${theme.palette.primary.main} 100%)`,
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
       }}
     >
       <Toolbar>
-        <Typography
-          variant="h4"
-          component="div"
+        <Box
           sx={{
             flexGrow: 1,
-            fontWeight: 700,
-            color: 'white',
-            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)',
             cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
           }}
           onClick={() => navigate('/')}
         >
-          aMORA
-        </Typography>
+          <img
+            src="/static/img/logo.png"
+            alt="aMORA"
+            style={{
+              height: '40px',
+              filter: 'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))'
+            }}
+          />
+        </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Button
