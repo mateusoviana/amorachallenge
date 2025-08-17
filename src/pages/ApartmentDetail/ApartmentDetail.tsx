@@ -27,6 +27,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
+import FinancingCalculator from '../../components/FinancingCalculator';
 import {
   LocationOn as LocationIcon,
   Bed as BedIcon,
@@ -186,6 +187,11 @@ const ApartmentDetail: React.FC = () => {
             <Typography variant="h3" component="div" sx={{ fontWeight: 700, color: theme.palette.primary.main, mb: 3 }}>
               {formatPrice(apartment.price)}
             </Typography>
+
+            {/* Calculadora de Financiamento */}
+            <Box sx={{ mb: 3 }}>
+              <FinancingCalculator apartmentPrice={apartment.price} />
+            </Box>
 
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
               {apartment.description}
