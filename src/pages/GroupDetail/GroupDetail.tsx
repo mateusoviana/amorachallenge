@@ -127,6 +127,43 @@ const GroupDetail: React.FC = () => {
     setActiveTab(newValue);
   };
 
+  const handleAddMember = async () => {
+    if (!newMemberEmail.trim() || !groupId) return;
+    
+    try {
+      setAddMemberLoading(true);
+      setError(null);
+      
+      // Buscar usuário por email
+      const foundUser = await groupService.getUserByEmail(newMemberEmail.trim());
+      
+      if (!foundUser) {
+        setError('Usuário não encontrado com este email');
+        return;
+      }
+      
+      // Verificar se já é membro
+      const isAlreadyMember = members.some(member => member.userId === foundUser.id);
+      if (isAlreadyMember) {
+        setError('Este usuário já é membro do grupo');
+        return;
+      }
+      
+      // Adicionar como membro
+      await groupService.addMemberToGroup(groupId, foundUser.id, 'member');
+      
+      setSuccess(`${foundUser.name} foi adicionado ao grupo com sucesso!`);
+      setAddMemberDialog(false);
+      setNewMemberEmail('');
+      await loadGroupData();
+      
+    } catch (err) {
+      setError('Erro ao adicionar membro');
+    } finally {
+      setAddMemberLoading(false);
+    }
+  };
+
   const handleRemoveMember = async (userId: string) => {
     if (!groupId || !window.confirm('Tem certeza que deseja remover este membro?')) return;
     
@@ -277,6 +314,18 @@ const GroupDetail: React.FC = () => {
               </ListItem>
             ))}
           </List>
+          
+          {isAdmin() && (
+            <Box sx={{ mt: 3, textAlign: 'center' }}>
+              <Button
+                variant="contained"
+                startIcon={<PersonAddIcon />}
+                onClick={() => setAddMemberDialog(true)}
+              >
+                Adicionar Membro
+              </Button>
+            </Box>
+          )}
         </Paper>
       </TabPanel>
 
@@ -303,6 +352,35 @@ const GroupDetail: React.FC = () => {
           )}
         </Paper>
       </TabPanel>
+
+      {/* Dialog para adicionar membro */}
+      <Dialog open={addMemberDialog} onClose={() => setAddMemberDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Adicionar Membro ao Grupo</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Email do usuário"
+            type="email"
+            fullWidth
+            variant="outlined"
+            value={newMemberEmail}
+            onChange={(e) => setNewMemberEmail(e.target.value)}
+            placeholder="usuario@email.com"
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddMemberDialog(false)}>Cancelar</Button>
+          <Button 
+            onClick={handleAddMember} 
+            variant="contained" 
+            disabled={addMemberLoading || !newMemberEmail.trim()}
+          >
+            {addMemberLoading ? 'Adicionando...' : 'Adicionar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

@@ -15,10 +15,12 @@ import Filters from '../../components/Filters/Filters';
 import { Apartment, FilterOptions, Group } from '../../types';
 import { apartmentService } from '../../services/apartmentService';
 import { groupService } from '../../services/groupService';
+import { useAuth } from '../../hooks/useAuth';
 
 
 const Home: React.FC = () => {
   const theme = useTheme();
+  const { user } = useAuth();
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [filteredApartments, setFilteredApartments] = useState<Apartment[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -39,7 +41,7 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     applyFilters();
@@ -49,7 +51,7 @@ const Home: React.FC = () => {
     try {
       setLoading(true);
       const [apartmentsData, groupsData] = await Promise.all([
-        apartmentService.getApartments(),
+        apartmentService.getApartments(user?.id),
         groupService.getGroups()
       ]);
       setApartments(apartmentsData);
@@ -232,7 +234,7 @@ const Home: React.FC = () => {
             <>
               <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="h6" color="text.secondary">
-                  {filteredApartments.length} imóvel{filteredApartments.length !== 1 ? 'es' : ''} encontrado{filteredApartments.length !== 1 ? 's' : ''}
+                  {filteredApartments.length} imóve{filteredApartments.length !== 1 ? 'is' : 'l'} encontrado{filteredApartments.length !== 1 ? 's' : ''}
                 </Typography>
               </Box>
 

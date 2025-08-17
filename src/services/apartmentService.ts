@@ -2,15 +2,50 @@ import { supabase } from '../lib/supabase';
 import { Apartment } from '../types';
 
 export const apartmentService = {
-  // Buscar todos os apartamentos
-  async getApartments(): Promise<Apartment[]> {
-    const { data, error } = await supabase
+  // Buscar apartamentos baseado no usuário logado
+  async getApartments(userId?: string): Promise<Apartment[]> {
+    let query = supabase
       .from('apartments')
       .select(`
         *,
-        owner:users(*)
+        owner:users(*),
+        apartment_groups(
+          groups(*)
+        )
       `);
 
+    if (!userId) {
+      // Usuário não logado: apenas apartamentos públicos
+      query = query.eq('is_public', true);
+    } else {
+      // Usuário logado: públicos + apartamentos dos grupos do usuário
+      const { data: userGroupIds } = await supabase
+        .from('group_members')
+        .select('group_id')
+        .eq('user_id', userId);
+      
+      const groupIds = userGroupIds?.map(g => g.group_id) || [];
+      
+      if (groupIds.length > 0) {
+        // Apartamentos públicos OU que pertencem aos grupos do usuário
+        const { data: groupApartmentIds } = await supabase
+          .from('apartment_groups')
+          .select('apartment_id')
+          .in('group_id', groupIds);
+        
+        const apartmentIds = groupApartmentIds?.map(a => a.apartment_id) || [];
+        
+        if (apartmentIds.length > 0) {
+          query = query.or(`is_public.eq.true,id.in.(${apartmentIds.join(',')})`);
+        } else {
+          query = query.eq('is_public', true);
+        }
+      } else {
+        query = query.eq('is_public', true);
+      }
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     
     return data?.map(apt => ({
@@ -37,7 +72,16 @@ export const apartmentService = {
         createdAt: new Date(apt.owner.created_at),
         updatedAt: new Date(apt.owner.updated_at),
       },
-      groups: [],
+      groups: apt.apartment_groups?.map((ag: any) => ({
+        id: ag.groups.id,
+        name: ag.groups.name,
+        description: ag.groups.description,
+        isPublic: ag.groups.is_public,
+        createdAt: new Date(ag.groups.created_at),
+        updatedAt: new Date(ag.groups.updated_at),
+        members: [],
+        apartments: [],
+      })) || [],
       images: apt.images || [],
       createdAt: new Date(apt.created_at),
       updatedAt: new Date(apt.updated_at),

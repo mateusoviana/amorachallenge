@@ -47,7 +47,7 @@ const Header: React.FC = () => {
     <AppBar 
       position="static" 
       sx={{ 
-        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+        background: `linear-gradient(90deg, ${theme.palette.secondary.main} 0%, ${theme.palette.primary.main} 100%)`,
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
       }}
     >

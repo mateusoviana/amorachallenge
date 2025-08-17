@@ -226,6 +226,30 @@ export const groupService = {
     if (error) throw error;
   },
 
+  // Buscar usuário por email
+  async getUserByEmail(email: string): Promise<User | null> {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return null; // Not found
+      throw error;
+    }
+    
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      password: '',
+      userType: data.user_type,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    };
+  },
+
   // Listar apartamentos por grupo
   async getApartmentsByGroup(groupId: string): Promise<Apartment[]> {
     const { data, error } = await supabase
