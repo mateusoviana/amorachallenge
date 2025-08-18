@@ -1,118 +1,79 @@
 import { ApartmentReaction, ReactionType, User } from '../types';
+import { supabase } from '../lib/supabase';
 
-// Mock data para reações
-let mockReactions: ApartmentReaction[] = [
-  {
-    id: 'reaction-1',
-    apartmentId: 'apartment-1',
-    groupId: 'group-1',
-    userId: '11111111-1111-1111-1111-111111111111',
-    reaction: 'love',
-    user: {
-      id: '11111111-1111-1111-1111-111111111111',
-      name: 'João Silva',
-      email: 'joao@email.com',
-      password: '123456',
-      userType: 'buyer',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 'reaction-2',
-    apartmentId: 'apartment-1',
-    groupId: 'group-1',
-    userId: '22222222-2222-2222-2222-222222222222',
-    reaction: 'like',
-    user: {
-      id: '22222222-2222-2222-2222-222222222222',
-      name: 'Maria Santos',
-      email: 'maria@email.com',
-      password: '123456',
-      userType: 'realtor',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 'reaction-3',
-    apartmentId: 'apartment-1',
-    groupId: 'group-1',
-    userId: '33333333-3333-3333-3333-333333333333',
-    reaction: 'unsure',
-    user: {
-      id: '33333333-3333-3333-3333-333333333333',
-      name: 'Pedro Costa',
-      email: 'pedro@email.com',
-      password: '123456',
-      userType: 'buyer',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 'reaction-4',
-    apartmentId: 'apartment-2',
-    groupId: 'group-1',
-    userId: '11111111-1111-1111-1111-111111111111',
-    reaction: 'love',
-    user: {
-      id: '11111111-1111-1111-1111-111111111111',
-      name: 'João Silva',
-      email: 'joao@email.com',
-      password: '123456',
-      userType: 'buyer',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
-
-// Mock users para as reações
-const mockUsers: User[] = [
-  {
-    id: '11111111-1111-1111-1111-111111111111',
-    name: 'João Silva',
-    email: 'joao@email.com',
-    password: '123456',
-    userType: 'buyer',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '22222222-2222-2222-2222-222222222222',
-    name: 'Maria Santos',
-    email: 'maria@email.com',
-    password: '123456',
-    userType: 'realtor',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '33333333-3333-3333-3333-333333333333',
-    name: 'Pedro Costa',
-    email: 'pedro@email.com',
-    password: '123456',
-    userType: 'buyer',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+// Função para buscar usuário por ID no Supabase
+const findUserById = async (userId: string): Promise<User | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    if (error || !data) {
+      return null;
+    }
+    
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      password: '',
+      userType: data.user_type,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    };
+  } catch (error) {
+    console.error('Erro ao buscar usuário:', error);
+    return null;
+  }
+};
 
 export const reactionService = {
   // Buscar reações de um imóvel em um grupo
   async getReactionsByApartmentAndGroup(apartmentId: string, groupId: string): Promise<ApartmentReaction[]> {
-    return mockReactions.filter(
-      reaction => reaction.apartmentId === apartmentId && reaction.groupId === groupId
-    );
+    try {
+      const { data, error } = await supabase
+        .from('apartment_reactions')
+        .select('*')
+        .eq('apartment_id', apartmentId)
+        .eq('group_id', groupId);
+      
+      if (error) {
+        console.error('Erro ao buscar reações:', error);
+        return [];
+      }
+      
+      // Buscar dados dos usuários separadamente
+      const reactions = await Promise.all(
+        (data || []).map(async (reaction) => {
+          const user = await findUserById(reaction.user_id);
+          return {
+            id: reaction.id,
+            apartmentId: reaction.apartment_id,
+            groupId: reaction.group_id,
+            userId: reaction.user_id,
+            reaction: reaction.reaction as ReactionType,
+            user: user || {
+              id: reaction.user_id,
+              name: 'Usuário não encontrado',
+              email: '',
+              password: '',
+              userType: 'buyer' as const,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+            createdAt: new Date(reaction.created_at),
+            updatedAt: new Date(reaction.updated_at),
+          };
+        })
+      );
+      
+      return reactions;
+    } catch (error) {
+      console.error('Erro ao buscar reações:', error);
+      return [];
+    }
   },
 
   // Adicionar ou atualizar reação
@@ -122,50 +83,102 @@ export const reactionService = {
     userId: string,
     reactionType: ReactionType
   ): Promise<ApartmentReaction> {
-    // Verificar se já existe uma reação do usuário para este imóvel neste grupo
-    const existingReactionIndex = mockReactions.findIndex(
-      reaction => 
-        reaction.apartmentId === apartmentId && 
-        reaction.groupId === groupId && 
-        reaction.userId === userId
-    );
-
-    const user = mockUsers.find(u => u.id === userId) || mockUsers[0];
-
-    if (existingReactionIndex >= 0) {
-      // Atualizar reação existente
-      mockReactions[existingReactionIndex] = {
-        ...mockReactions[existingReactionIndex],
-        reaction: reactionType,
-        updatedAt: new Date(),
-      };
-      return mockReactions[existingReactionIndex];
-    } else {
-      // Criar nova reação
-      const newReaction: ApartmentReaction = {
-        id: `reaction-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        apartmentId,
-        groupId,
-        userId,
-        reaction: reactionType,
+    console.log('🔄 addOrUpdateReaction:', { apartmentId, groupId, userId, reactionType });
+    
+    try {
+      // Verificar se já existe uma reação do usuário
+      const { data: existing, error: selectError } = await supabase
+        .from('apartment_reactions')
+        .select('*')
+        .eq('apartment_id', apartmentId)
+        .eq('group_id', groupId)
+        .eq('user_id', userId)
+        .single();
+      
+      console.log('🔍 Existing reaction:', existing, 'Error:', selectError);
+      
+      let reactionData;
+      
+      if (existing) {
+        // Atualizar reação existente
+        const { data, error } = await supabase
+          .from('apartment_reactions')
+          .update({
+            reaction: reactionType,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existing.id)
+          .select()
+          .single();
+        
+        if (error) {
+          console.error('❌ Erro ao atualizar reação:', error);
+          throw error;
+        }
+        console.log('✅ Reação atualizada:', data);
+        reactionData = data;
+      } else {
+        // Criar nova reação
+        console.log('➕ Criando nova reação...');
+        const { data, error } = await supabase
+          .from('apartment_reactions')
+          .insert({
+            apartment_id: apartmentId,
+            group_id: groupId,
+            user_id: userId,
+            reaction: reactionType,
+          })
+          .select()
+          .single();
+        
+        if (error) {
+          console.error('❌ Erro ao criar reação:', error);
+          throw error;
+        }
+        console.log('✅ Reação criada:', data);
+        reactionData = data;
+      }
+      
+      // Buscar dados do usuário
+      const user = await findUserById(userId);
+      if (!user) {
+        throw new Error(`Usuário não encontrado: ${userId}`);
+      }
+      
+      return {
+        id: reactionData.id,
+        apartmentId: reactionData.apartment_id,
+        groupId: reactionData.group_id,
+        userId: reactionData.user_id,
+        reaction: reactionData.reaction as ReactionType,
         user,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date(reactionData.created_at),
+        updatedAt: new Date(reactionData.updated_at),
       };
-      mockReactions.push(newReaction);
-      return newReaction;
+    } catch (error) {
+      console.error('Erro ao adicionar/atualizar reação:', error);
+      throw error;
     }
   },
 
   // Remover reação
   async removeReaction(apartmentId: string, groupId: string, userId: string): Promise<void> {
-    mockReactions = mockReactions.filter(
-      reaction => !(
-        reaction.apartmentId === apartmentId && 
-        reaction.groupId === groupId && 
-        reaction.userId === userId
-      )
-    );
+    try {
+      const { error } = await supabase
+        .from('apartment_reactions')
+        .delete()
+        .eq('apartment_id', apartmentId)
+        .eq('group_id', groupId)
+        .eq('user_id', userId);
+      
+      if (error) {
+        console.error('Erro ao remover reação:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Erro ao remover reação:', error);
+      throw error;
+    }
   },
 
   // Buscar reação específica do usuário
@@ -174,19 +187,62 @@ export const reactionService = {
     groupId: string,
     userId: string
   ): Promise<ApartmentReaction | null> {
-    return mockReactions.find(
-      reaction => 
-        reaction.apartmentId === apartmentId && 
-        reaction.groupId === groupId && 
-        reaction.userId === userId
-    ) || null;
+    try {
+      const { data, error } = await supabase
+        .from('apartment_reactions')
+        .select('*')
+        .eq('apartment_id', apartmentId)
+        .eq('group_id', groupId)
+        .eq('user_id', userId)
+        .single();
+      
+      if (error || !data) return null;
+      
+      const user = await findUserById(userId);
+      if (!user) return null;
+      
+      return {
+        id: data.id,
+        apartmentId: data.apartment_id,
+        groupId: data.group_id,
+        userId: data.user_id,
+        reaction: data.reaction as ReactionType,
+        user,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+    } catch (error) {
+      return null;
+    }
   },
 
   // Buscar todas as reações de um usuário em um grupo
   async getUserReactionsInGroup(groupId: string, userId: string): Promise<ApartmentReaction[]> {
-    return mockReactions.filter(
-      reaction => reaction.groupId === groupId && reaction.userId === userId
-    );
+    try {
+      const { data, error } = await supabase
+        .from('apartment_reactions')
+        .select('*')
+        .eq('group_id', groupId)
+        .eq('user_id', userId);
+      
+      if (error || !data) return [];
+      
+      const user = await findUserById(userId);
+      if (!user) return [];
+      
+      return data.map(reaction => ({
+        id: reaction.id,
+        apartmentId: reaction.apartment_id,
+        groupId: reaction.group_id,
+        userId: reaction.user_id,
+        reaction: reaction.reaction as ReactionType,
+        user,
+        createdAt: new Date(reaction.created_at),
+        updatedAt: new Date(reaction.updated_at),
+      }));
+    } catch (error) {
+      return [];
+    }
   },
 
   // Estatísticas de reações por imóvel
