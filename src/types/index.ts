@@ -98,3 +98,26 @@ export interface MonthlyGrowthStats {
   newApartments: number;
   totalApartments: number;
 }
+
+// Sistema de reações
+export type ReactionType = 'love' | 'like' | 'unsure' | 'dislike' | 'hate';
+
+export interface ApartmentReaction {
+  id: string;
+  apartmentId: string;
+  groupId: string;
+  userId: string;
+  reaction: ReactionType;
+  user: User;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ReactionSummary {
+  love: number;
+  like: number;
+  unsure: number;
+  dislike: number;
+  hate: number;
+  total: number;
+}

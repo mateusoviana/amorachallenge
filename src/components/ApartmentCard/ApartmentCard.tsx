@@ -23,22 +23,32 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { Apartment } from '../../types';
+import ApartmentReactions from '../ApartmentReactions';
+import { useReactions } from '../../hooks/useReactions';
 
 interface ApartmentCardProps {
   apartment: Apartment;
   showGroupActions?: boolean;
   onRemoveFromGroup?: () => void;
   canRemoveFromGroup?: boolean;
+  groupId?: string;
+  showReactions?: boolean;
 }
 
 const ApartmentCard: React.FC<ApartmentCardProps> = ({ 
   apartment, 
   showGroupActions = false, 
   onRemoveFromGroup, 
-  canRemoveFromGroup = false 
+  canRemoveFromGroup = false,
+  groupId,
+  showReactions = false
 }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { reactions, handleReactionChange } = useReactions(
+    apartment.id,
+    groupId || ''
+  );
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -190,6 +200,21 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
         >
           {apartment.description}
         </Typography>
+
+        {/* Reações */}
+        {showReactions && groupId && (
+          <Box 
+            sx={{ mt: 1, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ApartmentReactions
+              apartmentId={apartment.id}
+              groupId={groupId}
+              reactions={reactions}
+              onReactionChange={handleReactionChange}
+            />
+          </Box>
+        )}
       </CardContent>
       
       {showGroupActions && canRemoveFromGroup && (

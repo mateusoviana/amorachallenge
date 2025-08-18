@@ -565,6 +565,8 @@ const GroupDetail: React.FC = () => {
                 showGroupActions={true}
                 onRemoveFromGroup={() => handleRemoveApartmentFromGroup(apartment.id)}
                 canRemoveFromGroup={isAdmin() || apartment.ownerId === user?.id}
+                groupId={groupId}
+                showReactions={true}
               />
             </Grid>
           ))}
