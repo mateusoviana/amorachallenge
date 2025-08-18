@@ -37,6 +37,8 @@ const Home: React.FC = () => {
     neighborhood: [],
     groups: [],
     visibility: [],
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
   });
 
   useEffect(() => {
@@ -123,6 +125,41 @@ const Home: React.FC = () => {
       });
     }
 
+    // Aplicar ordenação
+    if (filters.sortBy && filters.sortOrder) {
+      filtered.sort((a, b) => {
+        let aValue: any;
+        let bValue: any;
+
+        switch (filters.sortBy) {
+          case 'price':
+            aValue = a.price;
+            bValue = b.price;
+            break;
+          case 'condominiumFee':
+            aValue = a.condominiumFee;
+            bValue = b.condominiumFee;
+            break;
+          case 'area':
+            aValue = a.area;
+            bValue = b.area;
+            break;
+          case 'createdAt':
+            aValue = a.createdAt;
+            bValue = b.createdAt;
+            break;
+          default:
+            return 0;
+        }
+
+        if (filters.sortOrder === 'asc') {
+          return aValue > bValue ? 1 : -1;
+        } else {
+          return aValue < bValue ? 1 : -1;
+        }
+      });
+    }
+
     setFilteredApartments(filtered);
   };
 
@@ -141,6 +178,8 @@ const Home: React.FC = () => {
       neighborhood: [],
       groups: [],
       visibility: [],
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
     });
   };
 
@@ -205,19 +244,16 @@ const Home: React.FC = () => {
         </Typography>
       </Box>
 
-      <Grid container spacing={3}>
-        {/* Filtros - Lado Esquerdo */}
-        <Grid item xs={12} md={3}>
-          <Filters
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            groups={groups}
-            onClearFilters={handleClearFilters}
-          />
-        </Grid>
+      {/* Filtros */}
+      <Filters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        groups={groups}
+        onClearFilters={handleClearFilters}
+      />
 
-        {/* Cards - Lado Direito */}
-        <Grid item xs={12} md={9}>
+      {/* Cards */}
+      <Box>
           {loading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
               <CircularProgress size={60} />
@@ -258,8 +294,7 @@ const Home: React.FC = () => {
               )}
             </>
           )}
-        </Grid>
-      </Grid>
+        </Box>
     </Container>
   );
 };

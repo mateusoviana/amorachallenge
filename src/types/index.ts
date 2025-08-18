@@ -63,6 +63,8 @@ export interface FilterOptions {
   neighborhood: string[];
   groups: string[];
   visibility: string[]; // 'public' | 'private'
+  sortBy?: 'price' | 'condominiumFee' | 'area' | 'createdAt';
+  sortOrder?: 'asc' | 'desc';
 }
 
 // Novos tipos para dashboard

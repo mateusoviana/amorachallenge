@@ -3,7 +3,6 @@ import {
   Box,
   Paper,
   Typography,
-  Slider,
   FormControl,
   InputLabel,
   Select,
@@ -12,15 +11,26 @@ import {
   OutlinedInput,
   SelectChangeEvent,
   Button,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
+  TextField,
+  Popover,
+  IconButton,
+  Drawer,
+  Divider,
+  Slider,
   useTheme,
 } from '@mui/material';
 import {
-  ExpandMore as ExpandMoreIcon,
-  FilterList as FilterIcon,
   Clear as ClearIcon,
+  Close as CloseIcon,
+  Tune as TuneIcon,
+  AttachMoney as MoneyIcon,
+  Sort as SortIcon,
+  Hotel as HotelIcon,
+  DirectionsCar as CarIcon,
+  KeyboardArrowDown as ArrowDownIcon,
+  HomeWork as NeighborhoodIcon,
+  LocationCity as CityIcon,
+  Menu as MenuIcon,
 } from '@mui/icons-material';
 import { FilterOptions, Group } from '../../types';
 
@@ -38,342 +48,846 @@ const Filters: React.FC<FiltersProps> = ({
   onClearFilters,
 }) => {
   const theme = useTheme();
-  const [expanded, setExpanded] = useState<string | false>('filters');
+  const [priceAnchorEl, setPriceAnchorEl] = useState<HTMLElement | null>(null);
+  const [bedroomsAnchorEl, setBedroomsAnchorEl] = useState<HTMLElement | null>(null);
+  const [parkingAnchorEl, setParkingAnchorEl] = useState<HTMLElement | null>(null);
+  const [neighborhoodAnchorEl, setNeighborhoodAnchorEl] = useState<HTMLElement | null>(null);
+  const [cityAnchorEl, setCityAnchorEl] = useState<HTMLElement | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [priceInputs, setPriceInputs] = useState({
+    min: filters.priceRange[0] / 1000,
+    max: filters.priceRange[1] / 1000,
+  });
 
-  const handlePriceChange = (event: Event, newValue: number | number[]) => {
+  const handlePriceClick = (event: React.MouseEvent<HTMLElement>) => {
+    setPriceAnchorEl(event.currentTarget);
+  };
+
+  const handlePriceClose = () => {
+    setPriceAnchorEl(null);
+  };
+
+  const handleBedroomsClose = () => {
+    setBedroomsAnchorEl(null);
+  };
+
+  const handleParkingClose = () => {
+    setParkingAnchorEl(null);
+  };
+
+  const handleNeighborhoodClose = () => {
+    setNeighborhoodAnchorEl(null);
+  };
+
+  const handleCityClose = () => {
+    setCityAnchorEl(null);
+  };
+
+  const handlePriceInputChange = (field: 'min' | 'max', value: string) => {
+    const numValue = parseInt(value) || 0;
+    setPriceInputs(prev => ({ ...prev, [field]: numValue }));
+  };
+
+  const handlePriceApply = () => {
+    const minPrice = Math.min(priceInputs.min, priceInputs.max) * 1000;
+    const maxPrice = Math.max(priceInputs.min, priceInputs.max) * 1000;
+    
     onFiltersChange({
       ...filters,
-      priceRange: newValue as [number, number],
+      priceRange: [minPrice, maxPrice],
+    });
+    handlePriceClose();
+  };
+
+  const handleBedroomsClick = (event: React.MouseEvent<HTMLElement>) => {
+    setBedroomsAnchorEl(event.currentTarget);
+  };
+
+  const handleParkingClick = (event: React.MouseEvent<HTMLElement>) => {
+    setParkingAnchorEl(event.currentTarget);
+  };
+
+  const handleNeighborhoodClick = (event: React.MouseEvent<HTMLElement>) => {
+    setNeighborhoodAnchorEl(event.currentTarget);
+  };
+
+  const handleCityClick = (event: React.MouseEvent<HTMLElement>) => {
+    setCityAnchorEl(event.currentTarget);
+  };
+
+
+
+  const handleSortChange = (event: SelectChangeEvent<string>) => {
+    const [sortBy, sortOrder] = event.target.value.split('-');
+    onFiltersChange({
+      ...filters,
+      sortBy: sortBy as any,
+      sortOrder: sortOrder as any,
     });
   };
 
-  const handleAreaChange = (event: Event, newValue: number | number[]) => {
-    onFiltersChange({
-      ...filters,
-      areaRange: newValue as [number, number],
-    });
+  const handleDrawerClose = () => {
+    setDrawerOpen(false);
   };
 
-  const handleBedroomsChange = (event: SelectChangeEvent<number[]>) => {
-    const value = event.target.value as number[];
-    onFiltersChange({
-      ...filters,
-      bedrooms: value,
-    });
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (filters.city.length > 0) count++;
+    if (filters.neighborhood.length > 0) count++;
+    if (filters.priceRange[0] > 0 || filters.priceRange[1] < 2000000) count++;
+    if (filters.bedrooms.length > 0) count++;
+    if (filters.bathrooms.length > 0) count++;
+    if (filters.parkingSpaces.length > 0) count++;
+    if (filters.areaRange[0] > 0 || filters.areaRange[1] < 500) count++;
+    if (filters.groups.length > 0) count++;
+    if (filters.visibility.length > 0) count++;
+    return count;
   };
 
-  const handleBathroomsChange = (event: SelectChangeEvent<number[]>) => {
-    const value = event.target.value as number[];
-    onFiltersChange({
-      ...filters,
-      bathrooms: value,
-    });
-  };
-
-  const handleParkingChange = (event: SelectChangeEvent<number[]>) => {
-    const value = event.target.value as number[];
-    onFiltersChange({
-      ...filters,
-      parkingSpaces: value,
-    });
-  };
-
-  const handleCityChange = (event: SelectChangeEvent<string[]>) => {
-    const value = event.target.value as string[];
-    onFiltersChange({
-      ...filters,
-      city: value,
-    });
-  };
-
-  const handleNeighborhoodChange = (event: SelectChangeEvent<string[]>) => {
-    const value = event.target.value as string[];
-    onFiltersChange({
-      ...filters,
-      neighborhood: value,
-    });
-  };
-
-  const handleGroupsChange = (event: SelectChangeEvent<string[]>) => {
-    const value = event.target.value as string[];
-    onFiltersChange({
-      ...filters,
-      groups: value,
-    });
-  };
-
-  const handleVisibilityChange = (event: SelectChangeEvent<string[]>) => {
-    const value = event.target.value as string[];
-    onFiltersChange({
-      ...filters,
-      visibility: value,
-    });
-  };
-
-  const handleAccordionChange = (panel: string) => (
-    event: React.SyntheticEvent,
-    isExpanded: boolean
-  ) => {
-    setExpanded(isExpanded ? panel : false);
-  };
+  const priceOpen = Boolean(priceAnchorEl);
+  const bedroomsOpen = Boolean(bedroomsAnchorEl);
+  const parkingOpen = Boolean(parkingAnchorEl);
+  const neighborhoodOpen = Boolean(neighborhoodAnchorEl);
+  const cityOpen = Boolean(cityAnchorEl);
 
   return (
-    <Paper
-      sx={{
-        p: 2,
-        height: 'fit-content',
-        borderRadius: 2,
-        border: `1px solid ${theme.palette.divider}`,
-        position: 'sticky',
-        top: 20,
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <FilterIcon color="primary" />
-          Filtros
-        </Typography>
-        <Button
-          startIcon={<ClearIcon />}
-          onClick={onClearFilters}
-          variant="outlined"
-          size="small"
-          color="secondary"
-        >
-          Limpar
-        </Button>
-      </Box>
-
-      <Accordion
-        expanded={expanded === 'filters'}
-        onChange={handleAccordionChange('filters')}
-        sx={{ boxShadow: 'none' }}
+    <>
+      {/* Barra de Filtros Fixa */}
+      <Paper
+        sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 1000,
+          p: 2,
+          mb: 3,
+          borderRadius: 2,
+          border: `1px solid ${theme.palette.divider}`,
+          backgroundColor: theme.palette.background.paper,
+          boxShadow: theme.shadows[2],
+        }}
       >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="subtitle1" fontWeight={600}>
-            Filtros de Imóveis
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+           {/* Bairro */}
+           <Button
+             variant="outlined"
+             size="small"
+             onClick={handleNeighborhoodClick}
+             sx={{ 
+               flex: 1, 
+               justifyContent: 'space-between',
+               minHeight: 40,
+               py: 1
+             }}
+           >
+             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+               <NeighborhoodIcon sx={{ color: theme.palette.text.primary }} fontSize="small" />
+               <Typography variant="body2">
+                 {filters.neighborhood.length === 0
+                   ? 'Bairro'
+                   : `${filters.neighborhood.length} bairro${filters.neighborhood.length !== 1 ? 's' : ''}`
+                 }
+               </Typography>
+               {filters.neighborhood.length > 0 && (
+                 <Chip
+                   label={filters.neighborhood.length}
+                   size="small"
+                   color="primary"
+                   sx={{ height: 20, minWidth: 20 }}
+                 />
+               )}
+             </Box>
+             <ArrowDownIcon fontSize="small" color="action" />
+           </Button>
+
+           {/* Cidade */}
+           <Button
+             variant="outlined"
+             size="small"
+             onClick={handleCityClick}
+             sx={{ 
+               flex: 1, 
+               justifyContent: 'space-between',
+               minHeight: 40,
+               py: 1
+             }}
+           >
+             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+               <CityIcon sx={{ color: theme.palette.text.primary }} fontSize="small" />
+               <Typography variant="body2">
+                 {filters.city.length === 0
+                   ? 'Cidade'
+                   : `${filters.city.length} cidade${filters.city.length !== 1 ? 's' : ''}`
+                 }
+               </Typography>
+               {filters.city.length > 0 && (
+                 <Chip
+                   label={filters.city.length}
+                   size="small"
+                   color="primary"
+                   sx={{ height: 20, minWidth: 20 }}
+                 />
+               )}
+             </Box>
+             <ArrowDownIcon fontSize="small" color="action" />
+           </Button>
+
+           {/* Valor */}
+           <Button
+             variant="outlined"
+             size="small"
+             onClick={handlePriceClick}
+             sx={{ 
+               flex: 1, 
+               justifyContent: 'space-between',
+               minHeight: 40,
+               py: 1
+             }}
+           >
+             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+               <MoneyIcon sx={{ color: theme.palette.text.primary }} fontSize="small" />
+               <Typography variant="body2">
+                 {filters.priceRange[0] === 0 && filters.priceRange[1] === 2000000
+                   ? 'Valor'
+                   : `R$ ${(filters.priceRange[0] / 1000).toFixed(0)}k - R$ ${(filters.priceRange[1] / 1000).toFixed(0)}k`
+                 }
+               </Typography>
+               {(filters.priceRange[0] > 0 || filters.priceRange[1] < 2000000) && (
+                 <Chip
+                   label="1"
+                   size="small"
+                   color="primary"
+                   sx={{ height: 20, minWidth: 20 }}
+                 />
+               )}
+             </Box>
+             <ArrowDownIcon fontSize="small" color="action" />
+           </Button>
+
+           {/* Quartos */}
+           <Button
+             variant="outlined"
+             size="small"
+             onClick={handleBedroomsClick}
+             sx={{ 
+               flex: 1, 
+               justifyContent: 'space-between',
+               minHeight: 40,
+               py: 1
+             }}
+           >
+             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+               <HotelIcon sx={{ color: theme.palette.text.primary }} fontSize="small" />
+               <Typography variant="body2">
+                 {filters.bedrooms.length === 0
+                   ? 'Quartos'
+                   : `${filters.bedrooms.length} quarto${filters.bedrooms.length !== 1 ? 's' : ''}`
+                 }
+               </Typography>
+               {filters.bedrooms.length > 0 && (
+                 <Chip
+                   label={filters.bedrooms.length}
+                   size="small"
+                   color="primary"
+                   sx={{ height: 20, minWidth: 20 }}
+                 />
+               )}
+             </Box>
+             <ArrowDownIcon fontSize="small" color="action" />
+           </Button>
+
+           {/* Vagas */}
+           <Button
+             variant="outlined"
+             size="small"
+             onClick={handleParkingClick}
+             sx={{ 
+               flex: 1, 
+               justifyContent: 'space-between',
+               minHeight: 40,
+               py: 1
+             }}
+           >
+             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+               <CarIcon sx={{ color: theme.palette.text.primary }} fontSize="small" />
+               <Typography variant="body2">
+                 {filters.parkingSpaces.length === 0
+                   ? 'Vagas'
+                   : `${filters.parkingSpaces.length} vaga${filters.parkingSpaces.length !== 1 ? 's' : ''}`
+                 }
+               </Typography>
+               {filters.parkingSpaces.length > 0 && (
+                 <Chip
+                   label={filters.parkingSpaces.length}
+                   size="small"
+                   color="primary"
+                   sx={{ height: 20, minWidth: 20 }}
+                 />
+               )}
+             </Box>
+             <ArrowDownIcon fontSize="small" color="action" />
+           </Button>
+
+           {/* Mais Filtros */}
+           <Button
+             variant="outlined"
+             size="small"
+             onClick={() => setDrawerOpen(true)}
+             sx={{ 
+               flex: 1, 
+               justifyContent: 'space-between',
+               minHeight: 40,
+               py: 1
+             }}
+           >
+             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+               <MenuIcon sx={{ color: theme.palette.text.primary }} fontSize="small" />
+               <Typography variant="body2">
+                 Mais Filtros
+               </Typography>
+               {getActiveFiltersCount() > 0 && (
+                 <Chip
+                   label={getActiveFiltersCount()}
+                   size="small"
+                   color="primary"
+                   sx={{ height: 20, minWidth: 20 }}
+                 />
+               )}
+             </Box>
+           </Button>
+
+           {/* Limpar Filtros */}
+           {getActiveFiltersCount() > 0 && (
+             <Button
+               variant="text"
+               size="small"
+               onClick={onClearFilters}
+               color="secondary"
+               sx={{ 
+                 minHeight: 40,
+                 py: 1,
+                 px: 2
+               }}
+             >
+               <ClearIcon sx={{ mr: 1 }} fontSize="small" />
+               <Typography variant="body2">
+                 Limpar
+               </Typography>
+             </Button>
+           )}
+         </Box>
+      </Paper>
+
+             {/* Popover para Valor */}
+       <Popover
+         open={priceOpen}
+         anchorEl={priceAnchorEl}
+         onClose={handlePriceClose}
+         anchorOrigin={{
+           vertical: 'bottom',
+           horizontal: 'left',
+         }}
+         transformOrigin={{
+           vertical: 'top',
+           horizontal: 'left',
+         }}
+       >
+         <Box sx={{ p: 2, minWidth: 250 }}>
+           <Typography variant="subtitle2" gutterBottom>
+             Faixa de Preço
+           </Typography>
+           <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+             <TextField
+               label="Mínimo (R$)"
+               type="number"
+               size="small"
+               value={priceInputs.min}
+               onChange={(e) => handlePriceInputChange('min', e.target.value)}
+               InputProps={{
+                 startAdornment: <Typography variant="caption">R$</Typography>,
+               }}
+             />
+             <TextField
+               label="Máximo (R$)"
+               type="number"
+               size="small"
+               value={priceInputs.max}
+               onChange={(e) => handlePriceInputChange('max', e.target.value)}
+               InputProps={{
+                 startAdornment: <Typography variant="caption">R$</Typography>,
+               }}
+             />
+           </Box>
+           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+             <Button size="small" onClick={handlePriceClose}>
+               Cancelar
+             </Button>
+             <Button size="small" variant="contained" onClick={handlePriceApply}>
+               Aplicar
+             </Button>
+           </Box>
+         </Box>
+       </Popover>
+
+       {/* Popover para Quartos */}
+       <Popover
+         open={bedroomsOpen}
+         anchorEl={bedroomsAnchorEl}
+         onClose={handleBedroomsClose}
+         anchorOrigin={{
+           vertical: 'bottom',
+           horizontal: 'left',
+         }}
+         transformOrigin={{
+           vertical: 'top',
+           horizontal: 'left',
+         }}
+       >
+         <Box sx={{ p: 2, minWidth: 200 }}>
+           <Typography variant="subtitle2" gutterBottom>
+             Número de Quartos
+           </Typography>
+           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
+             {[1, 2, 3, 4, 5, 6].map((bedroom) => (
+               <Button
+                 key={bedroom}
+                 variant={filters.bedrooms.includes(bedroom) ? "contained" : "outlined"}
+                 size="small"
+                 onClick={() => {
+                   const newBedrooms = filters.bedrooms.includes(bedroom)
+                     ? filters.bedrooms.filter(b => b !== bedroom)
+                     : [...filters.bedrooms, bedroom];
+                   onFiltersChange({
+                     ...filters,
+                     bedrooms: newBedrooms,
+                   });
+                 }}
+                 sx={{ justifyContent: 'flex-start' }}
+               >
+                 {bedroom} {bedroom === 1 ? 'quarto' : 'quartos'}
+               </Button>
+             ))}
+           </Box>
+           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+             <Button size="small" onClick={handleBedroomsClose}>
+               Fechar
+             </Button>
+           </Box>
+         </Box>
+       </Popover>
+
+       {/* Popover para Vagas */}
+       <Popover
+         open={parkingOpen}
+         anchorEl={parkingAnchorEl}
+         onClose={handleParkingClose}
+         anchorOrigin={{
+           vertical: 'bottom',
+           horizontal: 'left',
+         }}
+         transformOrigin={{
+           vertical: 'top',
+           horizontal: 'left',
+         }}
+       >
+         <Box sx={{ p: 2, minWidth: 200 }}>
+           <Typography variant="subtitle2" gutterBottom>
+             Vagas de Garagem
+           </Typography>
+           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
+             {[0, 1, 2, 3, 4, 5].map((parking) => (
+               <Button
+                 key={parking}
+                 variant={filters.parkingSpaces.includes(parking) ? "contained" : "outlined"}
+                 size="small"
+                 onClick={() => {
+                   const newParking = filters.parkingSpaces.includes(parking)
+                     ? filters.parkingSpaces.filter(p => p !== parking)
+                     : [...filters.parkingSpaces, parking];
+                   onFiltersChange({
+                     ...filters,
+                     parkingSpaces: newParking,
+                   });
+                 }}
+                 sx={{ justifyContent: 'flex-start' }}
+               >
+                 {parking} {parking === 1 ? 'vaga' : 'vagas'}
+               </Button>
+             ))}
+           </Box>
+           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+             <Button size="small" onClick={handleParkingClose}>
+               Fechar
+             </Button>
+           </Box>
+         </Box>
+               </Popover>
+
+        {/* Popover para Bairro */}
+        <Popover
+          open={neighborhoodOpen}
+          anchorEl={neighborhoodAnchorEl}
+          onClose={handleNeighborhoodClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'left',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'left',
+          }}
+        >
+          <Box sx={{ p: 2, minWidth: 200 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Bairros
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
+              {['Centro', 'Vila Madalena', 'Pinheiros', 'Itaim Bibi', 'Jardins', 'Moema', 'Vila Olímpia', 'Brooklin'].map((neighborhood) => (
+                <Button
+                  key={neighborhood}
+                  variant={filters.neighborhood.includes(neighborhood) ? "contained" : "outlined"}
+                  size="small"
+                  onClick={() => {
+                    const newNeighborhoods = filters.neighborhood.includes(neighborhood)
+                      ? filters.neighborhood.filter(n => n !== neighborhood)
+                      : [...filters.neighborhood, neighborhood];
+                    onFiltersChange({
+                      ...filters,
+                      neighborhood: newNeighborhoods,
+                    });
+                  }}
+                  sx={{ justifyContent: 'flex-start' }}
+                >
+                  {neighborhood}
+                </Button>
+              ))}
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+              <Button size="small" onClick={handleNeighborhoodClose}>
+                Fechar
+              </Button>
+            </Box>
+          </Box>
+        </Popover>
+
+        {/* Popover para Cidade */}
+        <Popover
+          open={cityOpen}
+          anchorEl={cityAnchorEl}
+          onClose={handleCityClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'left',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'left',
+          }}
+        >
+          <Box sx={{ p: 2, minWidth: 200 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Cidades
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
+              {['São Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Brasília', 'Salvador', 'Recife', 'Fortaleza', 'Curitiba'].map((city) => (
+                <Button
+                  key={city}
+                  variant={filters.city.includes(city) ? "contained" : "outlined"}
+                  size="small"
+                  onClick={() => {
+                    const newCities = filters.city.includes(city)
+                      ? filters.city.filter(c => c !== city)
+                      : [...filters.city, city];
+                    onFiltersChange({
+                      ...filters,
+                      city: newCities,
+                    });
+                  }}
+                  sx={{ justifyContent: 'flex-start' }}
+                >
+                  {city}
+                </Button>
+              ))}
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+              <Button size="small" onClick={handleCityClose}>
+                Fechar
+              </Button>
+            </Box>
+          </Box>
+        </Popover>
+
+        {/* Drawer para Filtros Avançados */}
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
+        onClose={handleDrawerClose}
+        PaperProps={{
+          sx: { width: 400, p: 3 },
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TuneIcon color="primary" />
+            Filtros Avançados
           </Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {/* Preço */}
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Faixa de Preço
-              </Typography>
-              <Slider
-                value={filters.priceRange}
-                onChange={handlePriceChange}
-                valueLabelDisplay="auto"
-                min={0}
-                max={2000000}
-                step={10000}
-                valueLabelFormat={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
-                sx={{ color: theme.palette.primary.main }}
-              />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-                <Typography variant="caption" color="text.secondary">
-                  R$ {(filters.priceRange[0] / 1000).toFixed(0)}k
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  R$ {(filters.priceRange[1] / 1000).toFixed(0)}k
-                </Typography>
-              </Box>
-            </Box>
+          <IconButton onClick={handleDrawerClose}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
 
-            {/* Área */}
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Área (m²)
-              </Typography>
-              <Slider
-                value={filters.areaRange}
-                onChange={handleAreaChange}
-                valueLabelDisplay="auto"
-                min={0}
-                max={500}
-                step={10}
-                sx={{ color: theme.palette.primary.main }}
-              />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-                <Typography variant="caption" color="text.secondary">
-                  {filters.areaRange[0]}m²
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {filters.areaRange[1]}m²
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Quartos */}
-            <FormControl fullWidth>
-              <InputLabel>Quartos</InputLabel>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* Ordenação */}
+          <Box>
+            <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <SortIcon fontSize="small" />
+              Ordenação
+            </Typography>
+            <FormControl fullWidth size="small">
               <Select
-                multiple
-                value={filters.bedrooms}
-                onChange={handleBedroomsChange}
-                input={<OutlinedInput label="Quartos" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} size="small" />
-                    ))}
-                  </Box>
-                )}
+                value={`${filters.sortBy || 'createdAt'}-${filters.sortOrder || 'desc'}`}
+                onChange={handleSortChange}
+                input={<OutlinedInput />}
               >
-                {[1, 2, 3, 4, 5, 6].map((bedroom) => (
-                  <MenuItem key={bedroom} value={bedroom}>
-                    {bedroom} {bedroom === 1 ? 'quarto' : 'quartos'}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {/* Banheiros */}
-            <FormControl fullWidth>
-              <InputLabel>Banheiros</InputLabel>
-              <Select
-                multiple
-                value={filters.bathrooms}
-                onChange={handleBathroomsChange}
-                input={<OutlinedInput label="Banheiros" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} size="small" />
-                    ))}
-                  </Box>
-                )}
-              >
-                {[1, 2, 3, 4, 5].map((bathroom) => (
-                  <MenuItem key={bathroom} value={bathroom}>
-                    {bathroom} {bathroom === 1 ? 'banheiro' : 'banheiros'}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {/* Vagas de Garagem */}
-            <FormControl fullWidth>
-              <InputLabel>Vagas de Garagem</InputLabel>
-              <Select
-                multiple
-                value={filters.parkingSpaces}
-                onChange={handleParkingChange}
-                input={<OutlinedInput label="Vagas de Garagem" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} size="small" />
-                    ))}
-                  </Box>
-                )}
-              >
-                {[0, 1, 2, 3, 4, 5].map((parking) => (
-                  <MenuItem key={parking} value={parking}>
-                    {parking} {parking === 1 ? 'vaga' : 'vagas'}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {/* Cidade */}
-            <FormControl fullWidth>
-              <InputLabel>Cidade</InputLabel>
-              <Select
-                multiple
-                value={filters.city}
-                onChange={handleCityChange}
-                input={<OutlinedInput label="Cidade" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} size="small" />
-                    ))}
-                  </Box>
-                )}
-              >
-                {['São Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Brasília', 'Salvador'].map((city) => (
-                  <MenuItem key={city} value={city}>
-                    {city}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {/* Bairro */}
-            <FormControl fullWidth>
-              <InputLabel>Bairro</InputLabel>
-              <Select
-                multiple
-                value={filters.neighborhood}
-                onChange={handleNeighborhoodChange}
-                input={<OutlinedInput label="Bairro" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} size="small" />
-                    ))}
-                  </Box>
-                )}
-              >
-                {['Centro', 'Vila Madalena', 'Pinheiros', 'Itaim Bibi', 'Jardins'].map((neighborhood) => (
-                  <MenuItem key={neighborhood} value={neighborhood}>
-                    {neighborhood}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {/* Grupos */}
-            <FormControl fullWidth>
-              <InputLabel>Grupos</InputLabel>
-              <Select
-                multiple
-                value={filters.groups}
-                onChange={handleGroupsChange}
-                input={<OutlinedInput label="Grupos" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => {
-                      const group = groups.find(g => g.id === value);
-                      return <Chip key={value} label={group?.name || value} size="small" />;
-                    })}
-                  </Box>
-                )}
-              >
-                {groups.map((group) => (
-                  <MenuItem key={group.id} value={group.id}>
-                    {group.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {/* Visibilidade */}
-            <FormControl fullWidth>
-              <InputLabel>Visibilidade</InputLabel>
-              <Select
-                multiple
-                value={filters.visibility}
-                onChange={handleVisibilityChange}
-                input={<OutlinedInput label="Visibilidade" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value === 'public' ? 'Público' : 'Privado'} size="small" />
-                    ))}
-                  </Box>
-                )}
-              >
-                <MenuItem value="public">Público</MenuItem>
-                <MenuItem value="private">Privado</MenuItem>
+                <MenuItem value="price-desc">Maior Preço</MenuItem>
+                <MenuItem value="price-asc">Menor Preço</MenuItem>
+                <MenuItem value="condominiumFee-desc">Maior Condomínio</MenuItem>
+                <MenuItem value="condominiumFee-asc">Menor Condomínio</MenuItem>
+                <MenuItem value="area-desc">Maior Área</MenuItem>
+                <MenuItem value="area-asc">Menor Área</MenuItem>
+                <MenuItem value="createdAt-desc">Mais Recentes</MenuItem>
+                <MenuItem value="createdAt-asc">Mais Antigos</MenuItem>
               </Select>
             </FormControl>
           </Box>
-        </AccordionDetails>
-      </Accordion>
-    </Paper>
+
+          <Divider />
+
+          {/* Preço */}
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>
+              Faixa de Preço
+            </Typography>
+            <Slider
+              value={filters.priceRange}
+              onChange={(event, newValue) => {
+                onFiltersChange({
+                  ...filters,
+                  priceRange: newValue as [number, number],
+                });
+              }}
+              valueLabelDisplay="auto"
+              min={0}
+              max={2000000}
+              step={10000}
+              valueLabelFormat={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+            />
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                R$ {(filters.priceRange[0] / 1000).toFixed(0)}k
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                R$ {(filters.priceRange[1] / 1000).toFixed(0)}k
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Área */}
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>
+              Área (m²)
+            </Typography>
+            <Slider
+              value={filters.areaRange}
+              onChange={(event, newValue) => {
+                onFiltersChange({
+                  ...filters,
+                  areaRange: newValue as [number, number],
+                });
+              }}
+              valueLabelDisplay="auto"
+              min={0}
+              max={500}
+              step={10}
+            />
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                {filters.areaRange[0]}m²
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {filters.areaRange[1]}m²
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Quartos */}
+          <FormControl fullWidth size="small">
+            <InputLabel>Quartos</InputLabel>
+            <Select
+              multiple
+              value={filters.bedrooms}
+              onChange={(event) => {
+                const value = event.target.value as number[];
+                onFiltersChange({
+                  ...filters,
+                  bedrooms: value,
+                });
+              }}
+              input={<OutlinedInput label="Quartos" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} size="small" />
+                  ))}
+                </Box>
+              )}
+            >
+              {[1, 2, 3, 4, 5, 6].map((bedroom) => (
+                <MenuItem key={bedroom} value={bedroom}>
+                  {bedroom} {bedroom === 1 ? 'quarto' : 'quartos'}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Banheiros */}
+          <FormControl fullWidth size="small">
+            <InputLabel>Banheiros</InputLabel>
+            <Select
+              multiple
+              value={filters.bathrooms}
+              onChange={(event) => {
+                const value = event.target.value as number[];
+                onFiltersChange({
+                  ...filters,
+                  bathrooms: value,
+                });
+              }}
+              input={<OutlinedInput label="Banheiros" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} size="small" />
+                  ))}
+                </Box>
+              )}
+            >
+              {[1, 2, 3, 4, 5].map((bathroom) => (
+                <MenuItem key={bathroom} value={bathroom}>
+                  {bathroom} {bathroom === 1 ? 'banheiro' : 'banheiros'}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Vagas de Garagem */}
+          <FormControl fullWidth size="small">
+            <InputLabel>Vagas de Garagem</InputLabel>
+            <Select
+              multiple
+              value={filters.parkingSpaces}
+              onChange={(event) => {
+                const value = event.target.value as number[];
+                onFiltersChange({
+                  ...filters,
+                  parkingSpaces: value,
+                });
+              }}
+              input={<OutlinedInput label="Vagas de Garagem" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} size="small" />
+                  ))}
+                </Box>
+              )}
+            >
+              {[0, 1, 2, 3, 4, 5].map((parking) => (
+                <MenuItem key={parking} value={parking}>
+                  {parking} {parking === 1 ? 'vaga' : 'vagas'}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Grupos */}
+          <FormControl fullWidth size="small">
+            <InputLabel>Grupos</InputLabel>
+            <Select
+              multiple
+              value={filters.groups}
+              onChange={(event) => {
+                const value = event.target.value as string[];
+                onFiltersChange({
+                  ...filters,
+                  groups: value,
+                });
+              }}
+              input={<OutlinedInput label="Grupos" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => {
+                    const group = groups.find(g => g.id === value);
+                    return <Chip key={value} label={group?.name || value} size="small" />;
+                  })}
+                </Box>
+              )}
+            >
+              {groups.map((group) => (
+                <MenuItem key={group.id} value={group.id}>
+                  {group.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Visibilidade */}
+          <FormControl fullWidth size="small">
+            <InputLabel>Visibilidade</InputLabel>
+            <Select
+              multiple
+              value={filters.visibility}
+              onChange={(event) => {
+                const value = event.target.value as string[];
+                onFiltersChange({
+                  ...filters,
+                  visibility: value,
+                });
+              }}
+              input={<OutlinedInput label="Visibilidade" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value === 'public' ? 'Público' : 'Privado'} size="small" />
+                  ))}
+                </Box>
+              )}
+            >
+              <MenuItem value="public">Público</MenuItem>
+              <MenuItem value="private">Privado</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Botões de Ação */}
+          <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={onClearFilters}
+              startIcon={<ClearIcon />}
+            >
+              Limpar Filtros
+            </Button>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleDrawerClose}
+            >
+              Aplicar
+            </Button>
+          </Box>
+        </Box>
+      </Drawer>
+    </>
   );
 };
 
