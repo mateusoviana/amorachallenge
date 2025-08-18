@@ -123,3 +123,15 @@ export interface ReactionSummary {
   hate: number;
   total: number;
 }
+
+// Sistema de comentários
+export interface ApartmentComment {
+  id: string;
+  apartmentId: string;
+  groupId: string;
+  userId: string;
+  comment: string;
+  user: User;
+  createdAt: Date;
+  updatedAt: Date;
+}

@@ -114,6 +114,29 @@ ON apartment_reactions(user_id);
 ALTER TABLE apartment_reactions DISABLE ROW LEVEL SECURITY;
 
 -- ================================
+-- Tabela de comentários de apartamentos
+-- ================================
+CREATE TABLE IF NOT EXISTS apartment_comments (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    apartment_id TEXT NOT NULL,
+    group_id TEXT NOT NULL,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    comment TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Índices para melhor performance
+CREATE INDEX IF NOT EXISTS idx_apartment_comments_apartment_group 
+ON apartment_comments(apartment_id, group_id);
+
+CREATE INDEX IF NOT EXISTS idx_apartment_comments_user 
+ON apartment_comments(user_id);
+
+-- Desabilitar RLS para simplificar
+ALTER TABLE apartment_comments DISABLE ROW LEVEL SECURITY;
+
+-- ================================
 -- Função e triggers de updated_at
 -- ================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -142,6 +165,11 @@ CREATE TRIGGER update_apartments_updated_at
 DROP TRIGGER IF EXISTS update_apartment_reactions_updated_at ON apartment_reactions;
 CREATE TRIGGER update_apartment_reactions_updated_at
     BEFORE UPDATE ON apartment_reactions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_apartment_comments_updated_at ON apartment_comments;
+CREATE TRIGGER update_apartment_comments_updated_at
+    BEFORE UPDATE ON apartment_comments
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ================================

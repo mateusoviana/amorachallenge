@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -10,6 +10,7 @@ import {
   IconButton,
   Tooltip,
   CardActions,
+  Button,
 } from '@mui/material';
 import {
   LocationOn as LocationIcon,
@@ -20,11 +21,14 @@ import {
   Public as PublicIcon,
   Lock as PrivateIcon,
   RemoveCircle as RemoveIcon,
+  Comment as CommentIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { Apartment } from '../../types';
 import ApartmentReactions from '../ApartmentReactions';
+import ApartmentComments from '../ApartmentComments';
 import { useReactions } from '../../hooks/useReactions';
+import { commentService } from '../../services/commentService';
 
 interface ApartmentCardProps {
   apartment: Apartment;
@@ -49,6 +53,24 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     apartment.id,
     groupId || ''
   );
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsCount, setCommentsCount] = useState(0);
+
+  useEffect(() => {
+    if (showReactions && groupId) {
+      loadCommentsCount();
+    }
+  }, [showReactions, groupId, apartment.id]);
+
+  const loadCommentsCount = async () => {
+    if (!groupId) return;
+    try {
+      const count = await commentService.getCommentsCount(apartment.id, groupId);
+      setCommentsCount(count);
+    } catch (error) {
+      console.error('Erro ao carregar contagem de comentários:', error);
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -201,19 +223,53 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           {apartment.description}
         </Typography>
 
-        {/* Reações */}
+        {/* Reações e Comentários */}
         {showReactions && groupId && (
           <Box 
             sx={{ mt: 1, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <ApartmentReactions
-              apartmentId={apartment.id}
-              groupId={groupId}
-              reactions={reactions}
-              onReactionChange={handleReactionChange}
-            />
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <ApartmentReactions
+                apartmentId={apartment.id}
+                groupId={groupId}
+                reactions={reactions}
+                onReactionChange={handleReactionChange}
+              />
+              
+              {/* Botão de Comentários */}
+              <Button
+                size="small"
+                startIcon={<CommentIcon />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCommentsOpen(true);
+                }}
+                sx={{
+                  minWidth: 'auto',
+                  color: 'text.secondary',
+                  '&:hover': {
+                    color: 'primary.main',
+                    bgcolor: 'action.hover',
+                  },
+                }}
+              >
+                {commentsCount > 0 && commentsCount}
+              </Button>
+            </Box>
           </Box>
+        )}
+        
+        {/* Dialog de Comentários */}
+        {showReactions && groupId && (
+          <ApartmentComments
+            apartmentId={apartment.id}
+            groupId={groupId}
+            open={commentsOpen}
+            onClose={() => setCommentsOpen(false)}
+            commentsCount={commentsCount}
+            onCommentsCountChange={setCommentsCount}
+          />
         )}
       </CardContent>
       
