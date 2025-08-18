@@ -1,0 +1,5 @@
+[33mcd04fa5[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m)[m Retira o reordenar e implementa o gerenciar imagens
+[33m00306a5[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Melhoria no input de imagens
+[33me15e317[m Refactoring GroupDetail page
+[33m647d803[m Implementation of image uploading
+[33m416b1d9[m Resolve conflitos do merge: mantém calculadora de financiamento e adiciona informações de condomínio/IPTU
