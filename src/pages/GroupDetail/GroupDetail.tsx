@@ -6,9 +6,6 @@ import {
   Typography,
   Box,
   Grid,
-  Card,
-  CardContent,
-  CardActions,
   Button,
   Avatar,
   Chip,
@@ -18,18 +15,11 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  ListItemSecondaryAction,
-  Tabs,
-  Tab,
   useTheme,
   Alert,
   CircularProgress,
-  Fab,
   Tooltip,
+  Divider,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -37,33 +27,13 @@ import {
   PersonRemove as PersonRemoveIcon,
   AdminPanelSettings as AdminIcon,
   Person as PersonIcon,
-  Home as HomeIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { groupService } from '../../services/groupService';
 import { Group, GroupMember, Apartment } from '../../types';
 import ApartmentCard from '../../components/ApartmentCard/ApartmentCard';
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`group-tabpanel-${index}`}
-      aria-labelledby={`group-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-}
 
 const GroupDetail: React.FC = () => {
   const theme = useTheme();
@@ -77,7 +47,7 @@ const GroupDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(0);
+  const [showAllMembers, setShowAllMembers] = useState(false);
   
   const [addMemberDialog, setAddMemberDialog] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState('');
@@ -121,10 +91,6 @@ const GroupDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
   };
 
   const handleAddMember = async () => {
@@ -209,43 +175,182 @@ const GroupDetail: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
+      {/* Header com botão voltar */}
+      <Box sx={{ mb: 3 }}>
         <Button
           variant="outlined"
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate('/groups')}
-          sx={{ mb: 2 }}
         >
           Voltar para Grupos
         </Button>
-        
-        <Paper sx={{ p: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box>
-              <Typography variant="h4" component="h1" sx={{ fontWeight: 700, color: theme.palette.secondary.main, mb: 1 }}>
-                {group?.name}
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                {group?.description}
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Chip
-                  label={group?.isPublic ? 'Público' : 'Privado'}
-                  color={group?.isPublic ? 'primary' : 'secondary'}
-                />
-                <Chip
-                  label={`${members.length} membro${members.length !== 1 ? 's' : ''}`}
-                  variant="outlined"
-                />
-                <Chip
-                  label={`${apartments.length} imóve${apartments.length !== 1 ? 'is' : 'l'}`}
-                  variant="outlined"
-                />
-              </Box>
+      </Box>
+
+      {/* Header do Grupo com Membros */}
+      <Paper 
+        sx={{ 
+          mb: 4,
+          p: 4,
+          borderRadius: 3,
+          background: `linear-gradient(180deg, 
+            ${theme.palette.primary.main}15 0%, 
+            ${theme.palette.primary.main}08 30%, 
+            ${theme.palette.primary.main}04 60%, 
+            transparent 100%)`,
+          border: `1px solid ${theme.palette.primary.main}20`,
+          position: 'relative',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderRadius: 3,
+            background: `linear-gradient(180deg, 
+              ${theme.palette.secondary.main}10 0%, 
+              ${theme.palette.secondary.main}05 40%, 
+              transparent 100%)`,
+            pointerEvents: 'none',
+          }
+        }}
+      >
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          {/* Título e descrição */}
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="h3" 
+              component="h1" 
+              sx={{ 
+                fontWeight: 700, 
+                color: theme.palette.secondary.main, 
+                mb: 1,
+                textAlign: 'center'
+              }}
+            >
+              {group?.name}
+            </Typography>
+            <Typography 
+              variant="h6" 
+              color="text.secondary" 
+              sx={{ 
+                mb: 3, 
+                textAlign: 'center',
+                maxWidth: 600,
+                mx: 'auto'
+              }}
+            >
+              {group?.description}
+            </Typography>
+            
+            {/* Chips informativos */}
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Chip
+                label={group?.isPublic ? 'Público' : 'Privado'}
+                color={group?.isPublic ? 'primary' : 'secondary'}
+                sx={{ fontWeight: 600 }}
+              />
+              <Chip
+                label={`${apartments.length} imóve${apartments.length !== 1 ? 'is' : 'l'}`}
+                variant="outlined"
+                sx={{ fontWeight: 600 }}
+              />
             </Box>
           </Box>
-        </Paper>
-      </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Seção de Membros */}
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="h6" sx={{ color: theme.palette.secondary.main, fontWeight: 600 }}>
+                Membros ({members.length})
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                {isAdmin() && (
+                  <Button
+                    size="small"
+                    variant="contained"
+                    startIcon={<PersonAddIcon />}
+                    onClick={() => setAddMemberDialog(true)}
+                  >
+                    Adicionar
+                  </Button>
+                )}
+                {members.length > 6 && (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    endIcon={showAllMembers ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                    onClick={() => setShowAllMembers(!showAllMembers)}
+                  >
+                    {showAllMembers ? 'Ver menos' : 'Ver todos'}
+                  </Button>
+                )}
+              </Box>
+            </Box>
+
+            {/* Lista de membros em grid compacto */}
+            <Grid container spacing={2}>
+              {(showAllMembers ? members : members.slice(0, 6)).map((member) => (
+                <Grid item xs={12} sm={6} md={4} key={member.id}>
+                  <Box 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 2,
+                      p: 2,
+                      borderRadius: 2,
+                      bgcolor: 'background.paper',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      '&:hover': {
+                        borderColor: theme.palette.primary.main,
+                        transform: 'translateY(-2px)',
+                        transition: 'all 0.2s ease-in-out'
+                      }
+                    }}
+                  >
+                    <Avatar 
+                      sx={{ 
+                        bgcolor: member.role === 'admin' ? theme.palette.primary.main : theme.palette.secondary.main,
+                        width: 40,
+                        height: 40
+                      }}
+                    >
+                      {member.user.name.charAt(0).toUpperCase()}
+                    </Avatar>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }} noWrap>
+                        {member.user.name}
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                        <Chip
+                          size="small"
+                          label={member.role === 'admin' ? 'Admin' : 'Membro'}
+                          color={member.role === 'admin' ? 'primary' : 'default'}
+                          icon={member.role === 'admin' ? <AdminIcon /> : <PersonIcon />}
+                        />
+                      </Box>
+                    </Box>
+                    {isAdmin() && member.userId !== user?.id && (
+                      <Tooltip title="Remover membro">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleRemoveMember(member.userId)}
+                        >
+                          <PersonRemoveIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        </Box>
+      </Paper>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -259,99 +364,40 @@ const GroupDetail: React.FC = () => {
         </Alert>
       )}
 
-      <Paper sx={{ mb: 3 }}>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant="fullWidth"
-        >
-          <Tab label="Membros" icon={<PersonIcon />} iconPosition="start" />
-          <Tab label="Imóveis" icon={<HomeIcon />} iconPosition="start" />
-        </Tabs>
-      </Paper>
+      {/* Seção de Imóveis */}
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h5" sx={{ fontWeight: 600, color: theme.palette.secondary.main }}>
+          Imóveis do Grupo
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          {apartments.length} imóve{apartments.length !== 1 ? 'is' : 'l'} encontrado{apartments.length !== 1 ? 's' : ''}
+        </Typography>
+      </Box>
 
-      <TabPanel value={activeTab} index={0}>
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" sx={{ mb: 3, color: theme.palette.secondary.main }}>
-            Membros do Grupo
+      {apartments.length === 0 ? (
+        <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3 }}>
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            Nenhum imóvel cadastrado
           </Typography>
-          
-          <List>
-            {members.map((member) => (
-              <ListItem key={member.id} divider>
-                <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
-                    {member.user.name.charAt(0).toUpperCase()}
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={member.user.name}
-                  secondary={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        {member.user.email}
-                      </Typography>
-                      <Chip
-                        size="small"
-                        label={member.role === 'admin' ? 'Admin' : 'Membro'}
-                        color={member.role === 'admin' ? 'primary' : 'default'}
-                        icon={member.role === 'admin' ? <AdminIcon /> : <PersonIcon />}
-                      />
-                    </Box>
-                  }
-                />
-                {isAdmin() && member.userId !== user?.id && (
-                  <ListItemSecondaryAction>
-                    <IconButton
-                      edge="end"
-                      color="error"
-                      onClick={() => handleRemoveMember(member.userId)}
-                    >
-                      <PersonRemoveIcon />
-                    </IconButton>
-                  </ListItemSecondaryAction>
-                )}
-              </ListItem>
-            ))}
-          </List>
-          
-          {isAdmin() && (
-            <Box sx={{ mt: 3, textAlign: 'center' }}>
-              <Button
-                variant="contained"
-                startIcon={<PersonAddIcon />}
-                onClick={() => setAddMemberDialog(true)}
-              >
-                Adicionar Membro
-              </Button>
-            </Box>
-          )}
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+            Este grupo ainda não possui imóveis cadastrados.
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => navigate('/add-apartment')}
+          >
+            Cadastrar Primeiro Imóvel
+          </Button>
         </Paper>
-      </TabPanel>
-
-      <TabPanel value={activeTab} index={1}>
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" sx={{ mb: 3, color: theme.palette.secondary.main }}>
-            Imóveis do Grupo
-          </Typography>
-          
-          {apartments.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography variant="body1" color="text.secondary">
-                Nenhum imóvel cadastrado neste grupo ainda.
-              </Typography>
-            </Box>
-          ) : (
-            <Grid container spacing={2}>
-              {apartments.map((apartment) => (
-                <Grid item xs={12} sm={6} md={4} lg={3} key={apartment.id}>
-                  <ApartmentCard apartment={apartment} />
-                </Grid>
-              ))}
+      ) : (
+        <Grid container spacing={2}>
+          {apartments.map((apartment) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} xl={2} key={apartment.id}>
+              <ApartmentCard apartment={apartment} />
             </Grid>
-          )}
-        </Paper>
-      </TabPanel>
+          ))}
+        </Grid>
+      )}
 
       {/* Dialog para adicionar membro */}
       <Dialog open={addMemberDialog} onClose={() => setAddMemberDialog(false)} maxWidth="sm" fullWidth>
