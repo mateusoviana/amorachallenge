@@ -44,10 +44,11 @@ const Header: React.FC = () => {
 
   return (
     <AppBar 
-      position="static" 
+      position="fixed" 
       sx={{ 
         background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+        zIndex: (theme) => theme.zIndex.drawer + 1,
       }}
     >
       <Toolbar>

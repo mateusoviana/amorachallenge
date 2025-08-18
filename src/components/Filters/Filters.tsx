@@ -153,19 +153,19 @@ const Filters: React.FC<FiltersProps> = ({
   return (
     <>
       {/* Barra de Filtros Fixa */}
-      <Paper
-        sx={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 1000,
-          p: 2,
-          mb: 3,
-          borderRadius: 2,
-          border: `1px solid ${theme.palette.divider}`,
-          backgroundColor: theme.palette.background.paper,
-          boxShadow: theme.shadows[2],
-        }}
-      >
+                           <Paper
+          sx={{
+            position: 'sticky',
+            top: 76, // 64px (header) + 12px (gap)
+            zIndex: (theme) => theme.zIndex.appBar - 1,
+            p: 2,
+            mb: 3,
+            borderRadius: 3, // Arredondamento maior dos cantos
+            border: `1px solid ${theme.palette.divider}`,
+            backgroundColor: theme.palette.background.paper,
+            boxShadow: theme.shadows[2],
+          }}
+        >
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
            {/* Bairro */}
            <Button

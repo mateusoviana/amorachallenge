@@ -22,7 +22,7 @@ const App: React.FC = () => {
         <Router>
           <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <Header />
-            <Box component="main" sx={{ flexGrow: 1 }}>
+            <Box component="main" sx={{ flexGrow: 1, pt: 8 }}>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/apartment/:id" element={<ApartmentDetail />} />
