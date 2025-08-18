@@ -42,6 +42,7 @@ import {
   Email as EmailIcon,
   ArrowBack as ArrowBackIcon,
   Edit as EditIcon,
+  WhatsApp as WhatsAppIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { Apartment, Group } from '../../types';
@@ -116,6 +117,14 @@ const ApartmentDetail: React.FC = () => {
       // Aqui você implementaria a lógica para contatar o proprietário
       console.log(`Contatando ${apartment.owner.name}`);
     }
+  };
+
+  const handleShareWhatsApp = () => {
+    if (!apartment) return;
+    const currentUrl = window.location.href;
+    const message = `Olha que imóvel interessante que encontrei na aMORA! ${apartment.title} por ${formatPrice(apartment.price)}. Confira: ${currentUrl}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   if (loading) {
@@ -337,6 +346,17 @@ const ApartmentDetail: React.FC = () => {
                 color="secondary"
               >
                 Contatar Proprietário
+              </Button>
+
+              <Button
+                variant="outlined"
+                startIcon={<WhatsAppIcon />}
+                onClick={handleShareWhatsApp}
+                fullWidth
+                size="large"
+                sx={{ color: '#25D366', borderColor: '#25D366', '&:hover': { borderColor: '#25D366', backgroundColor: 'rgba(37, 211, 102, 0.04)' } }}
+              >
+                Compartilhar no WhatsApp
               </Button>
             </Box>
           </Paper>
