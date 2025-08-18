@@ -200,5 +200,74 @@ export const apartmentService = {
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),
     };
+  },
+
+  // Atualizar apartamento
+  async updateApartment(id: string, updates: Partial<Apartment>): Promise<Apartment | null> {
+    const updateData: any = {};
+    
+    // Mapear campos do frontend para o backend
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.price !== undefined) updateData.price = updates.price;
+    if (updates.condominiumFee !== undefined) updateData.condominium_fee = updates.condominiumFee;
+    if (updates.iptu !== undefined) updateData.iptu = updates.iptu;
+    if (updates.address !== undefined) updateData.address = updates.address;
+    if (updates.neighborhood !== undefined) updateData.neighborhood = updates.neighborhood;
+    if (updates.city !== undefined) updateData.city = updates.city;
+    if (updates.state !== undefined) updateData.state = updates.state;
+    if (updates.bedrooms !== undefined) updateData.bedrooms = updates.bedrooms;
+    if (updates.bathrooms !== undefined) updateData.bathrooms = updates.bathrooms;
+    if (updates.parkingSpaces !== undefined) updateData.parking_spaces = updates.parkingSpaces;
+    if (updates.area !== undefined) updateData.area = updates.area;
+    if (updates.isPublic !== undefined) updateData.is_public = updates.isPublic;
+    if (updates.images !== undefined) updateData.images = updates.images;
+
+    const { data, error } = await supabase
+      .from('apartments')
+      .update(updateData)
+      .eq('id', id)
+      .select(`
+        *,
+        owner:users(*)
+      `)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null; // Not found
+      throw error;
+    }
+
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      price: data.price,
+      condominiumFee: data.condominium_fee || 0,
+      iptu: data.iptu || 0,
+      address: data.address,
+      neighborhood: data.neighborhood,
+      city: data.city,
+      state: data.state,
+      bedrooms: data.bedrooms,
+      bathrooms: data.bathrooms,
+      parkingSpaces: data.parking_spaces,
+      area: data.area,
+      isPublic: data.is_public,
+      ownerId: data.owner_id,
+      owner: {
+        id: data.owner.id,
+        name: data.owner.name,
+        email: data.owner.email,
+        password: '',
+        userType: data.owner.user_type,
+        createdAt: new Date(data.owner.created_at),
+        updatedAt: new Date(data.owner.updated_at),
+      },
+      groups: [],
+      images: data.images || [],
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    };
   }
 };

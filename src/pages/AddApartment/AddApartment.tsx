@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -72,6 +72,7 @@ function TabPanel(props: TabPanelProps) {
 const AddApartment: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { userGroups } = useGroups();
   const { userApartments, updateApartment, deleteApartment, addApartment } = useUserApartments();
@@ -83,6 +84,16 @@ const AddApartment: React.FC = () => {
   const [editingApartment, setEditingApartment] = useState<Apartment | null>(null);
   const [importUrl, setImportUrl] = useState('');
   const [isImporting, setIsImporting] = useState(false);
+
+  // Detectar se um apartamento foi passado via state para edição
+  useEffect(() => {
+    const editApartment = location.state?.editApartment;
+    if (editApartment) {
+      handleEditApartment(editApartment);
+      // Limpar o state para evitar re-edição ao recarregar
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.state]);
 
 
   const [formData, setFormData] = useState({
@@ -660,6 +671,7 @@ const AddApartment: React.FC = () => {
                   onImagesChange={handleImagesChange}
                   maxImages={10}
                   apartmentId={editingApartment?.id}
+                  isEditing={true}
                 />
               </Grid>
 

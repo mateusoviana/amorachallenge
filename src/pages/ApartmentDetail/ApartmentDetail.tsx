@@ -41,6 +41,7 @@ import {
   Phone as PhoneIcon,
   Email as EmailIcon,
   ArrowBack as ArrowBackIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { Apartment, Group } from '../../types';
@@ -291,6 +292,20 @@ const ApartmentDetail: React.FC = () => {
             </Typography>
             
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {/* Botão de Editar para o proprietário */}
+              {user && apartment.ownerId === user.id && (
+                <Button
+                  variant="contained"
+                  startIcon={<EditIcon />}
+                  onClick={() => navigate('/add-apartment', { state: { editApartment: apartment } })}
+                  fullWidth
+                  size="large"
+                  color="secondary"
+                >
+                  Editar Apartamento
+                </Button>
+              )}
+
               {user && (
                 <Button
                   variant="contained"

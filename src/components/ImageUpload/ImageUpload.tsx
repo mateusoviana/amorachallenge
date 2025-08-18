@@ -23,16 +23,17 @@ import {
   Image as ImageIcon,
   Close as CloseIcon,
   ZoomIn as ZoomInIcon,
-  Reorder as ReorderIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { ImageService, UploadProgress } from '../../services/imageService';
-import { ImageReorder } from './ImageReorder';
+import { ImageManager } from './ImageManager';
 
 interface ImageUploadProps {
   images: string[];
   onImagesChange: (images: string[]) => void;
   maxImages?: number;
   apartmentId?: string;
+  isEditing?: boolean;
 }
 
 interface FileUploadProgress {
@@ -44,6 +45,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   onImagesChange,
   maxImages = 10,
   apartmentId,
+  isEditing = false,
 }) => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   const [uploadProgress, setUploadProgress] = useState<FileUploadProgress>({});
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showImageDialog, setShowImageDialog] = useState(false);
-  const [showReorderDialog, setShowReorderDialog] = useState(false);
+  const [showManagerDialog, setShowManagerDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
@@ -194,7 +196,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     setShowImageDialog(true);
   };
 
-  const handleReorderImages = (newOrder: string[]) => {
+  const handleManageImages = (newOrder: string[]) => {
     onImagesChange(newOrder);
   };
 
@@ -312,14 +314,16 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
             <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
               Imagens ({images.length})
             </Typography>
-            <Chip 
-              icon={<ReorderIcon />} 
-              label="Reordenar" 
-              variant="outlined" 
-              size="small"
-              sx={{ cursor: 'pointer' }}
-              onClick={() => setShowReorderDialog(true)}
-            />
+            {isEditing && (
+              <Chip 
+                icon={<SettingsIcon />} 
+                label="Gerenciar" 
+                variant="outlined" 
+                size="small"
+                sx={{ cursor: 'pointer' }}
+                onClick={() => setShowManagerDialog(true)}
+              />
+            )}
           </Box>
           
           <Grid container spacing={2}>
@@ -470,12 +474,12 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         </DialogActions>
       </Dialog>
 
-      {/* Dialog para reordenação de imagens */}
-      <ImageReorder
-        open={showReorderDialog}
-        onClose={() => setShowReorderDialog(false)}
+      {/* Dialog para gerenciamento de imagens */}
+      <ImageManager
+        open={showManagerDialog}
+        onClose={() => setShowManagerDialog(false)}
         images={images}
-        onReorder={handleReorderImages}
+        onSave={handleManageImages}
       />
     </Box>
   );
