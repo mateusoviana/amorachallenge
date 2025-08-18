@@ -20,6 +20,12 @@ import {
   CircularProgress,
   Tooltip,
   Divider,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Checkbox,
+  ListItemSecondaryAction,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -29,9 +35,12 @@ import {
   Person as PersonIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
+  Add as AddIcon,
+  Home as HomeIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { groupService } from '../../services/groupService';
+import { apartmentService } from '../../services/apartmentService';
 import { Group, GroupMember, Apartment } from '../../types';
 import ApartmentCard from '../../components/ApartmentCard/ApartmentCard';
 
@@ -52,6 +61,11 @@ const GroupDetail: React.FC = () => {
   const [addMemberDialog, setAddMemberDialog] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [addMemberLoading, setAddMemberLoading] = useState(false);
+  
+  const [addApartmentDialog, setAddApartmentDialog] = useState(false);
+  const [userApartments, setUserApartments] = useState<Apartment[]>([]);
+  const [selectedApartments, setSelectedApartments] = useState<string[]>([]);
+  const [addApartmentLoading, setAddApartmentLoading] = useState(false);
 
   useEffect(() => {
     if (groupId) {
@@ -90,6 +104,20 @@ const GroupDetail: React.FC = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadUserApartments = async () => {
+    try {
+      if (!user?.id) return;
+      const apartments = await apartmentService.getApartments(user.id);
+      // Filtrar apenas apartamentos que não estão no grupo atual
+      const availableApartments = apartments.filter(apt => 
+        !apt.groups.some(group => group.id === groupId)
+      );
+      setUserApartments(availableApartments);
+    } catch (err) {
+      console.error('Erro ao carregar apartamentos do usuário:', err);
     }
   };
 
@@ -139,6 +167,55 @@ const GroupDetail: React.FC = () => {
       await loadGroupData();
     } catch (err) {
       setError('Erro ao remover membro');
+    }
+  };
+
+  const handleOpenAddApartmentDialog = async () => {
+    await loadUserApartments();
+    setAddApartmentDialog(true);
+  };
+
+  const handleAddApartments = async () => {
+    if (!groupId || selectedApartments.length === 0) return;
+    
+    try {
+      setAddApartmentLoading(true);
+      setError(null);
+      
+      // Adicionar cada apartamento selecionado ao grupo
+      for (const apartmentId of selectedApartments) {
+        await groupService.addApartmentToGroup(apartmentId, groupId);
+      }
+      
+      setSuccess(`${selectedApartments.length} imóve${selectedApartments.length !== 1 ? 'is' : 'l'} adicionado${selectedApartments.length !== 1 ? 's' : ''} ao grupo com sucesso!`);
+      setAddApartmentDialog(false);
+      setSelectedApartments([]);
+      await loadGroupData();
+      
+    } catch (err) {
+      setError('Erro ao adicionar imóveis ao grupo');
+    } finally {
+      setAddApartmentLoading(false);
+    }
+  };
+
+  const handleToggleApartmentSelection = (apartmentId: string) => {
+    setSelectedApartments(prev => 
+      prev.includes(apartmentId)
+        ? prev.filter(id => id !== apartmentId)
+        : [...prev, apartmentId]
+    );
+  };
+
+  const handleRemoveApartmentFromGroup = async (apartmentId: string) => {
+    if (!groupId || !window.confirm('Tem certeza que deseja remover este imóvel do grupo?')) return;
+    
+    try {
+      await groupService.removeApartmentFromGroup(apartmentId, groupId);
+      setSuccess('Imóvel removido do grupo com sucesso!');
+      await loadGroupData();
+    } catch (err) {
+      setError('Erro ao remover imóvel do grupo');
     }
   };
 
@@ -369,9 +446,19 @@ const GroupDetail: React.FC = () => {
         <Typography variant="h5" sx={{ fontWeight: 600, color: theme.palette.secondary.main }}>
           Imóveis do Grupo
         </Typography>
-        <Typography variant="body1" color="text.secondary">
-          {apartments.length} imóve{apartments.length !== 1 ? 'is' : 'l'} encontrado{apartments.length !== 1 ? 's' : ''}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body1" color="text.secondary">
+            {apartments.length} imóve{apartments.length !== 1 ? 'is' : 'l'} encontrado{apartments.length !== 1 ? 's' : ''}
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenAddApartmentDialog}
+            size="small"
+          >
+            Adicionar Imóveis
+          </Button>
+        </Box>
       </Box>
 
       {apartments.length === 0 ? (
@@ -382,18 +469,33 @@ const GroupDetail: React.FC = () => {
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
             Este grupo ainda não possui imóveis cadastrados.
           </Typography>
-          <Button
-            variant="contained"
-            onClick={() => navigate('/add-apartment')}
-          >
-            Cadastrar Primeiro Imóvel
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenAddApartmentDialog}
+            >
+              Adicionar Imóveis Existentes
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<HomeIcon />}
+              onClick={() => navigate('/add-apartment')}
+            >
+              Cadastrar Novo Imóvel
+            </Button>
+          </Box>
         </Paper>
       ) : (
         <Grid container spacing={2}>
           {apartments.map((apartment) => (
             <Grid item xs={12} sm={6} md={4} lg={3} xl={2} key={apartment.id}>
-              <ApartmentCard apartment={apartment} />
+              <ApartmentCard 
+                apartment={apartment} 
+                showGroupActions={true}
+                onRemoveFromGroup={() => handleRemoveApartmentFromGroup(apartment.id)}
+                canRemoveFromGroup={isAdmin() || apartment.ownerId === user?.id}
+              />
             </Grid>
           ))}
         </Grid>
@@ -425,6 +527,100 @@ const GroupDetail: React.FC = () => {
           >
             {addMemberLoading ? 'Adicionando...' : 'Adicionar'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog para adicionar imóveis */}
+      <Dialog 
+        open={addApartmentDialog} 
+        onClose={() => setAddApartmentDialog(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <HomeIcon />
+            Adicionar Imóveis ao Grupo
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {userApartments.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Nenhum imóvel disponível
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Você não possui imóveis que possam ser adicionados a este grupo.
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<HomeIcon />}
+                onClick={() => {
+                  setAddApartmentDialog(false);
+                  navigate('/add-apartment');
+                }}
+              >
+                Cadastrar Novo Imóvel
+              </Button>
+            </Box>
+          ) : (
+            <>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Selecione os imóveis que deseja adicionar ao grupo:
+              </Typography>
+              <List sx={{ maxHeight: 400, overflow: 'auto' }}>
+                {userApartments.map((apartment) => (
+                  <ListItem key={apartment.id} divider>
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+                        <HomeIcon />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={apartment.title}
+                      secondary={
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">
+                            R$ {apartment.price.toLocaleString()} • {apartment.area}m² • {apartment.bedrooms} quartos
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {apartment.neighborhood}, {apartment.city}-{apartment.state}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                    <ListItemSecondaryAction>
+                      <Checkbox
+                        edge="end"
+                        checked={selectedApartments.includes(apartment.id)}
+                        onChange={() => handleToggleApartmentSelection(apartment.id)}
+                      />
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                ))}
+              </List>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setAddApartmentDialog(false);
+            setSelectedApartments([]);
+          }}>
+            Cancelar
+          </Button>
+          {userApartments.length > 0 && (
+            <Button 
+              onClick={handleAddApartments} 
+              variant="contained" 
+              disabled={addApartmentLoading || selectedApartments.length === 0}
+            >
+              {addApartmentLoading 
+                ? 'Adicionando...' 
+                : `Adicionar ${selectedApartments.length} imóve${selectedApartments.length !== 1 ? 'is' : 'l'}`
+              }
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </Container>

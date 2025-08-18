@@ -7,6 +7,9 @@ import {
   Box,
   Chip,
   useTheme,
+  IconButton,
+  Tooltip,
+  CardActions,
 } from '@mui/material';
 import {
   LocationOn as LocationIcon,
@@ -16,15 +19,24 @@ import {
   SquareFoot as AreaIcon,
   Public as PublicIcon,
   Lock as PrivateIcon,
+  RemoveCircle as RemoveIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { Apartment } from '../../types';
 
 interface ApartmentCardProps {
   apartment: Apartment;
+  showGroupActions?: boolean;
+  onRemoveFromGroup?: () => void;
+  canRemoveFromGroup?: boolean;
 }
 
-const ApartmentCard: React.FC<ApartmentCardProps> = ({ apartment }) => {
+const ApartmentCard: React.FC<ApartmentCardProps> = ({ 
+  apartment, 
+  showGroupActions = false, 
+  onRemoveFromGroup, 
+  canRemoveFromGroup = false 
+}) => {
   const theme = useTheme();
   const navigate = useNavigate();
 
@@ -37,6 +49,13 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({ apartment }) => {
 
   const handleCardClick = () => {
     navigate(`/apartment/${apartment.id}`);
+  };
+
+  const handleRemoveClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Evita que o clique no botão acione o clique do card
+    if (onRemoveFromGroup) {
+      onRemoveFromGroup();
+    }
   };
 
   return (
@@ -172,6 +191,21 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({ apartment }) => {
           {apartment.description}
         </Typography>
       </CardContent>
+      
+      {showGroupActions && canRemoveFromGroup && (
+        <CardActions sx={{ pt: 0, pb: 1, px: 1.5 }}>
+          <Tooltip title="Remover do grupo">
+            <IconButton
+              size="small"
+              color="error"
+              onClick={handleRemoveClick}
+              sx={{ ml: 'auto' }}
+            >
+              <RemoveIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </CardActions>
+      )}
     </Card>
   );
 };
