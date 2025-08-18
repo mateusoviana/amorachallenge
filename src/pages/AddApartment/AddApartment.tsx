@@ -659,6 +659,7 @@ const AddApartment: React.FC = () => {
                   images={formData.images}
                   onImagesChange={handleImagesChange}
                   maxImages={10}
+                  apartmentId={editingApartment?.id}
                 />
               </Grid>
 
