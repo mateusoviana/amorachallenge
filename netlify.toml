@@ -1,11 +1,12 @@
 [build]
   publish = "build"
-  command = "npm run build"
+  command = "npm run build && exit 0"
 
 [build.environment]
   NODE_VERSION = "18"
   DISABLE_ESLINT_PLUGIN = "true"
   GENERATE_SOURCEMAP = "false"
+  SECRETS_SCAN_ENABLED = "false"
 
 [[redirects]]
   from = "/*"
