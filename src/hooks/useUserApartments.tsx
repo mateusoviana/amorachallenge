@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { Apartment } from '../types';
 import { supabase } from '../lib/supabase';
@@ -9,13 +9,7 @@ export const useUserApartments = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      fetchUserApartments();
-    }
-  }, [user]);
-
-  const fetchUserApartments = async () => {
+  const fetchUserApartments = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -81,7 +75,15 @@ export const useUserApartments = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserApartments();
+    }
+  }, [user, fetchUserApartments]);
+
+
 
   const updateApartment = async (id: string, updates: Partial<Apartment>) => {
     try {

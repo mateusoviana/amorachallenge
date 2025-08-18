@@ -27,7 +27,7 @@ export const apartmentService = {
       const groupIds = userGroupIds?.map(g => g.group_id) || [];
       
       if (groupIds.length > 0) {
-        // Apartamentos públicos OU que pertencem aos grupos do usuário
+        // Apartamentos públicos OU que pertencem aos grupos do usuário OU que são do próprio usuário
         const { data: groupApartmentIds } = await supabase
           .from('apartment_groups')
           .select('apartment_id')
@@ -36,12 +36,12 @@ export const apartmentService = {
         const apartmentIds = groupApartmentIds?.map(a => a.apartment_id) || [];
         
         if (apartmentIds.length > 0) {
-          query = query.or(`is_public.eq.true,id.in.(${apartmentIds.join(',')})`);
+          query = query.or(`is_public.eq.true,id.in.(${apartmentIds.join(',')}),owner_id.eq.${userId}`);
         } else {
-          query = query.eq('is_public', true);
+          query = query.or(`is_public.eq.true,owner_id.eq.${userId}`);
         }
       } else {
-        query = query.eq('is_public', true);
+        query = query.or(`is_public.eq.true,owner_id.eq.${userId}`);
       }
     }
 
@@ -137,6 +137,94 @@ export const apartmentService = {
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),
     };
+  },
+
+  // Buscar apartamentos disponíveis para adicionar a um grupo
+  async getAvailableApartmentsForGroup(userId: string, excludeGroupId: string): Promise<Apartment[]> {
+    // Buscar grupos do usuário
+    const { data: userGroupIds } = await supabase
+      .from('group_members')
+      .select('group_id')
+      .eq('user_id', userId);
+    
+    const groupIds = userGroupIds?.map(g => g.group_id) || [];
+    
+    let query = supabase
+      .from('apartments')
+      .select(`
+        *,
+        owner:users(*),
+        apartment_groups(
+          groups(*)
+        )
+      `);
+    
+    if (groupIds.length > 0) {
+      // Buscar apartamentos dos grupos do usuário OU que são do próprio usuário
+      const { data: groupApartmentIds } = await supabase
+        .from('apartment_groups')
+        .select('apartment_id')
+        .in('group_id', groupIds);
+      
+      const apartmentIds = groupApartmentIds?.map(a => a.apartment_id) || [];
+      
+      if (apartmentIds.length > 0) {
+        query = query.or(`id.in.(${apartmentIds.join(',')}),owner_id.eq.${userId}`);
+      } else {
+        query = query.eq('owner_id', userId);
+      }
+    } else {
+      query = query.eq('owner_id', userId);
+    }
+    
+    const { data, error } = await query;
+    if (error) throw error;
+    
+    const apartments = data?.map(apt => ({
+      id: apt.id,
+      title: apt.title,
+      description: apt.description,
+      price: apt.price,
+      condominiumFee: apt.condominium_fee || 0,
+      iptu: apt.iptu || 0,
+      address: apt.address,
+      neighborhood: apt.neighborhood,
+      city: apt.city,
+      state: apt.state,
+      bedrooms: apt.bedrooms,
+      bathrooms: apt.bathrooms,
+      parkingSpaces: apt.parking_spaces,
+      area: apt.area,
+      isPublic: apt.is_public,
+      ownerId: apt.owner_id,
+      owner: {
+        id: apt.owner.id,
+        name: apt.owner.name,
+        email: apt.owner.email,
+        password: '',
+        userType: apt.owner.user_type,
+        createdAt: new Date(apt.owner.created_at),
+        updatedAt: new Date(apt.owner.updated_at),
+      },
+      groups: apt.apartment_groups?.map((ag: any) => ({
+        id: ag.groups.id,
+        name: ag.groups.name,
+        description: ag.groups.description,
+        isPublic: ag.groups.is_public,
+        createdAt: new Date(ag.groups.created_at),
+        updatedAt: new Date(ag.groups.updated_at),
+        members: [],
+        apartments: [],
+      })) || [],
+      images: apt.images || [],
+      createdAt: new Date(apt.created_at),
+      updatedAt: new Date(apt.updated_at),
+    })) || [];
+    
+    // Filtrar apartamentos que não estão no grupo atual
+    return apartments.filter(apt => 
+      !apt.groups.some((group: any) => group.id === excludeGroupId)
+    );
   },
 
   // Criar apartamento

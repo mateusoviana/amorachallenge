@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
-import { Group, GroupMember } from '../types';
+import { Group } from '../types';
 import { groupService } from '../services/groupService';
 
 export const useGroups = () => {
@@ -9,13 +9,7 @@ export const useGroups = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      fetchUserGroups();
-    }
-  }, [user]);
-
-  const fetchUserGroups = async () => {
+  const fetchUserGroups = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -31,7 +25,15 @@ export const useGroups = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserGroups();
+    }
+  }, [user, fetchUserGroups]);
+
+
 
   const createGroup = async (groupData: Omit<Group, 'id' | 'createdAt' | 'updatedAt' | 'members' | 'apartments'>) => {
     try {

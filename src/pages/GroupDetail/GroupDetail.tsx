@@ -109,13 +109,9 @@ const GroupDetail: React.FC = () => {
 
   const loadUserApartments = async () => {
     try {
-      if (!user?.id) return;
-      const apartments = await apartmentService.getApartments(user.id);
-      // Filtrar apenas apartamentos que não estão no grupo atual
-      const availableApartments = apartments.filter(apt => 
-        !apt.groups.some(group => group.id === groupId)
-      );
-      setUserApartments(availableApartments);
+      if (!user?.id || !groupId) return;
+      const apartments = await apartmentService.getAvailableApartmentsForGroup(user.id, groupId);
+      setUserApartments(apartments);
     } catch (err) {
       console.error('Erro ao carregar apartamentos do usuário:', err);
     }
@@ -550,7 +546,7 @@ const GroupDetail: React.FC = () => {
                 Nenhum imóvel disponível
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Você não possui imóveis que possam ser adicionados a este grupo.
+                Você não possui imóveis disponíveis para adicionar a este grupo.
               </Typography>
               <Button
                 variant="contained"
@@ -566,7 +562,7 @@ const GroupDetail: React.FC = () => {
           ) : (
             <>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Selecione os imóveis que deseja adicionar ao grupo:
+                Selecione os imóveis que deseja adicionar ao grupo (inclui seus imóveis e imóveis dos seus grupos):
               </Typography>
               <List sx={{ maxHeight: 400, overflow: 'auto' }}>
                 {userApartments.map((apartment) => (
