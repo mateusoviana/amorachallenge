@@ -151,12 +151,7 @@ const Groups: React.FC = () => {
                       <Typography variant="h6" component="h3">
                         {group.name}
                       </Typography>
-                      <Chip
-                        icon={group.isPublic ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                        label={group.isPublic ? 'Público' : 'Privado'}
-                        size="small"
-                        sx={{ ml: 'auto' }}
-                      />
+
                     </Box>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       {group.description}
@@ -209,17 +204,7 @@ const Groups: React.FC = () => {
             onChange={(e) => setCreateGroupData({ ...createGroupData, description: e.target.value })}
             sx={{ mb: 2 }}
           />
-          <FormControl fullWidth>
-            <InputLabel>Visibilidade</InputLabel>
-            <Select
-              value={createGroupData.isPublic}
-              onChange={(e) => setCreateGroupData({ ...createGroupData, isPublic: e.target.value })}
-              label="Visibilidade"
-            >
-              <MenuItem value="false">Privado</MenuItem>
-              <MenuItem value="true">Público</MenuItem>
-            </Select>
-          </FormControl>
+
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCreateDialogOpen(false)}>Cancelar</Button>
