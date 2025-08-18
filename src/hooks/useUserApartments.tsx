@@ -176,8 +176,7 @@ export const useUserApartments = () => {
         throw new Error('Usuário não encontrado');
       }
       
-      console.log('Criando apartamento:', apartment);
-      console.log('User ID:', user.id);
+
       
       const { data, error } = await supabase
         .from('apartments')
@@ -207,7 +206,7 @@ export const useUserApartments = () => {
         throw error;
       }
       
-      console.log('Apartamento criado:', data);
+
       
       // Associar apartamento aos grupos selecionados
       if (apartment.groups && apartment.groups.length > 0) {

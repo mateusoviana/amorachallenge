@@ -45,6 +45,7 @@ import { useGroups } from '../../hooks/useGroups';
 import { useUserApartments } from '../../hooks/useUserApartments';
 import { Apartment, Group } from '../../types';
 import { scrapingService } from '../../services/scrapingService';
+import { ImageUpload } from '../../components/ImageUpload';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -122,20 +123,10 @@ const AddApartment: React.FC = () => {
     }));
   };
 
-  const handleAddImage = () => {
-    const imageUrl = prompt('Digite a URL da imagem:');
-    if (imageUrl) {
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, imageUrl],
-      }));
-    }
-  };
-
-  const handleRemoveImage = (index: number) => {
+  const handleImagesChange = (images: string[]) => {
     setFormData(prev => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index),
+      images,
     }));
   };
 
@@ -664,30 +655,11 @@ const AddApartment: React.FC = () => {
               </Grid>
 
               <Grid item xs={12}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<CloudUploadIcon />}
-                    onClick={handleAddImage}
-                    sx={{ alignSelf: 'flex-start' }}
-                  >
-                    Adicionar Imagem
-                  </Button>
-
-                  {formData.images.length > 0 && (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {formData.images.map((image, index) => (
-                        <Chip
-                          key={index}
-                          label={`Imagem ${index + 1}`}
-                          onDelete={() => handleRemoveImage(index)}
-                          color="primary"
-                          variant="outlined"
-                        />
-                      ))}
-                    </Box>
-                  )}
-                </Box>
+                <ImageUpload
+                  images={formData.images}
+                  onImagesChange={handleImagesChange}
+                  maxImages={10}
+                />
               </Grid>
 
               {/* Botões de Ação */}
