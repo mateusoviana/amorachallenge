@@ -84,6 +84,19 @@ export const groupService = {
     };
   },
 
+  // Atualizar grupo
+  async updateGroup(groupId: string, updates: { name: string; description: string }): Promise<void> {
+    const { error } = await supabase
+      .from('groups')
+      .update({
+        name: updates.name,
+        description: updates.description,
+      })
+      .eq('id', groupId);
+    
+    if (error) throw error;
+  },
+
   // Deletar grupo
   async deleteGroup(groupId: string): Promise<void> {
     const { error } = await supabase

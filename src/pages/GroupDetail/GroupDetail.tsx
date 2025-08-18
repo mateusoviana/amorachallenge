@@ -37,6 +37,9 @@ import {
   ExpandLess as ExpandLessIcon,
   Add as AddIcon,
   Home as HomeIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { groupService } from '../../services/groupService';
@@ -66,6 +69,10 @@ const GroupDetail: React.FC = () => {
   const [userApartments, setUserApartments] = useState<Apartment[]>([]);
   const [selectedApartments, setSelectedApartments] = useState<string[]>([]);
   const [addApartmentLoading, setAddApartmentLoading] = useState(false);
+  
+  const [editGroupDialog, setEditGroupDialog] = useState(false);
+  const [editGroupData, setEditGroupData] = useState({ name: '', description: '' });
+  const [editGroupLoading, setEditGroupLoading] = useState(false);
 
   useEffect(() => {
     if (groupId) {
@@ -215,6 +222,50 @@ const GroupDetail: React.FC = () => {
     }
   };
 
+  const handleEditGroup = async () => {
+    if (!editGroupData.name.trim() || !groupId) return;
+    
+    try {
+      setEditGroupLoading(true);
+      setError(null);
+      
+      await groupService.updateGroup(groupId, {
+        name: editGroupData.name,
+        description: editGroupData.description,
+      });
+      
+      setSuccess('Grupo atualizado com sucesso!');
+      setEditGroupDialog(false);
+      await loadGroupData();
+      
+    } catch (err) {
+      setError('Erro ao atualizar grupo');
+    } finally {
+      setEditGroupLoading(false);
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!groupId || !window.confirm('Tem certeza que deseja excluir este grupo? Esta ação não pode ser desfeita.')) return;
+    
+    try {
+      await groupService.deleteGroup(groupId);
+      navigate('/groups');
+    } catch (err) {
+      setError('Erro ao excluir grupo');
+    }
+  };
+
+  const handleOpenEditDialog = () => {
+    if (group) {
+      setEditGroupData({
+        name: group.name,
+        description: group.description,
+      });
+      setEditGroupDialog(true);
+    }
+  };
+
   const isAdmin = () => {
     return members.some(member => 
       member.userId === user?.id && member.role === 'admin'
@@ -291,18 +342,41 @@ const GroupDetail: React.FC = () => {
         <Box sx={{ position: 'relative', zIndex: 1 }}>
           {/* Título e descrição */}
           <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="h3" 
-              component="h1" 
-              sx={{ 
-                fontWeight: 700, 
-                color: theme.palette.secondary.main, 
-                mb: 1,
-                textAlign: 'center'
-              }}
-            >
-              {group?.name}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 1 }}>
+              <Typography 
+                variant="h3" 
+                component="h1" 
+                sx={{ 
+                  fontWeight: 700, 
+                  color: theme.palette.secondary.main,
+                  textAlign: 'center'
+                }}
+              >
+                {group?.name}
+              </Typography>
+              {isAdmin() && (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Tooltip title="Editar grupo">
+                    <IconButton
+                      color="primary"
+                      onClick={handleOpenEditDialog}
+                      sx={{ bgcolor: 'background.paper', '&:hover': { bgcolor: 'action.hover' } }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Excluir grupo">
+                    <IconButton
+                      color="error"
+                      onClick={handleDeleteGroup}
+                      sx={{ bgcolor: 'background.paper', '&:hover': { bgcolor: 'action.hover' } }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )}
+            </Box>
             <Typography 
               variant="h6" 
               color="text.secondary" 
@@ -617,6 +691,48 @@ const GroupDetail: React.FC = () => {
               }
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog para editar grupo */}
+      <Dialog open={editGroupDialog} onClose={() => setEditGroupDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <SettingsIcon />
+            Editar Grupo
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Nome do Grupo"
+            fullWidth
+            variant="outlined"
+            value={editGroupData.name}
+            onChange={(e) => setEditGroupData({ ...editGroupData, name: e.target.value })}
+            sx={{ mb: 2, mt: 1 }}
+          />
+          <TextField
+            margin="dense"
+            label="Descrição"
+            fullWidth
+            variant="outlined"
+            multiline
+            rows={3}
+            value={editGroupData.description}
+            onChange={(e) => setEditGroupData({ ...editGroupData, description: e.target.value })}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditGroupDialog(false)}>Cancelar</Button>
+          <Button 
+            onClick={handleEditGroup} 
+            variant="contained" 
+            disabled={editGroupLoading || !editGroupData.name.trim()}
+          >
+            {editGroupLoading ? 'Salvando...' : 'Salvar'}
+          </Button>
         </DialogActions>
       </Dialog>
     </Container>
