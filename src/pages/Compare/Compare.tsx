@@ -176,7 +176,7 @@ const Compare: React.FC = () => {
             mb: 2,
           }}
         >
-          🏠 Amora Compara
+          🏠 aMORA Compara
         </Typography>
         
         <Typography

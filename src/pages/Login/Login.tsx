@@ -96,6 +96,14 @@ const Login: React.FC = () => {
             </Button>
 
             <Button
+              variant="outlined"
+              onClick={() => navigate('/register')}
+              sx={{ mt: 1 }}
+            >
+              Criar nova conta
+            </Button>
+
+            <Button
               variant="text"
               onClick={() => navigate('/')}
               sx={{ mt: 1 }}

@@ -36,6 +36,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Apartment } from '../../types';
 import { apartmentService } from '../../services/apartmentService';
 import { groupService } from '../../services/groupService';
+import AuthModal from '../../components/AuthModal/AuthModal';
 
 const MatchSwipe: React.FC = () => {
   const theme = useTheme();
@@ -49,6 +50,7 @@ const MatchSwipe: React.FC = () => {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
 
   useEffect(() => {
@@ -154,6 +156,11 @@ const MatchSwipe: React.FC = () => {
      const handleLike = async () => {
      if (currentIndex >= apartments.length) return;
      
+     if (!user) {
+       setAuthModalOpen(true);
+       return;
+     }
+     
      const apartment = apartments[currentIndex];
      await addToGroup(apartment, 'curtidos');
      // Definir direção e executar animação
@@ -164,6 +171,11 @@ const MatchSwipe: React.FC = () => {
 
    const handleDislike = async () => {
      if (currentIndex >= apartments.length) return;
+     
+     if (!user) {
+       setAuthModalOpen(true);
+       return;
+     }
      
      const apartment = apartments[currentIndex];
      await addToGroup(apartment, 'descartados');
@@ -665,6 +677,13 @@ const MatchSwipe: React.FC = () => {
              </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Modal de Autenticação */}
+        <AuthModal
+          open={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
+          message="Para curtir ou descartar imóveis no aMORA Match, você precisa estar logado."
+        />
      </Box>
    );
  };

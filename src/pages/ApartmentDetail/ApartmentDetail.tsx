@@ -48,6 +48,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Apartment, Group } from '../../types';
 import { apartmentService } from '../../services/apartmentService';
 import { groupService } from '../../services/groupService';
+import AuthModal from '../../components/AuthModal/AuthModal';
 
 const ApartmentDetail: React.FC = () => {
   const theme = useTheme();
@@ -61,6 +62,7 @@ const ApartmentDetail: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [addToGroupDialog, setAddToGroupDialog] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string>('');
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -315,17 +317,15 @@ const ApartmentDetail: React.FC = () => {
                 </Button>
               )}
 
-              {user && (
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => setAddToGroupDialog(true)}
-                  fullWidth
-                  size="large"
-                >
-                  Adicionar ao Grupo
-                </Button>
-              )}
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => user ? setAddToGroupDialog(true) : setAuthModalOpen(true)}
+                fullWidth
+                size="large"
+              >
+                Adicionar ao Grupo
+              </Button>
 
               <Button
                 variant="outlined"
@@ -471,6 +471,13 @@ const ApartmentDetail: React.FC = () => {
           <Button onClick={handleCloseImage}>Fechar</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Modal de Autenticação */}
+      <AuthModal
+        open={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        message="Para adicionar imóveis aos seus grupos, você precisa estar logado."
+      />
     </Container>
   );
 };

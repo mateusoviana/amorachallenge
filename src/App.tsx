@@ -13,6 +13,7 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import Groups from './pages/Groups/Groups';
 import GroupDetail from './pages/GroupDetail/GroupDetail';
 import Login from './pages/Login/Login';
+import Register from './pages/Register/Register';
 import { Compare, CompareSelect, CompareResult } from './pages/Compare';
 import { MatchSetup, MatchSwipe, MatchRedirect } from './pages/Match';
 
@@ -34,6 +35,7 @@ const App: React.FC = () => {
                 <Route path="/groups" element={<Groups />} />
                 <Route path="/group/:groupId" element={<GroupDetail />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
                 <Route path="/compare" element={<Compare />} />
                 <Route path="/compare/select" element={<CompareSelect />} />
                 <Route path="/compare/result" element={<CompareResult />} />

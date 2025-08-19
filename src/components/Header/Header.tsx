@@ -128,7 +128,7 @@ const Header: React.FC = () => {
               },
             }}
           >
-            Amora Compara
+            aMORA Compara
           </Button>
 
           <Button
@@ -326,7 +326,7 @@ const Header: React.FC = () => {
                <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
                  <CompareIcon />
                </ListItemIcon>
-               <ListItemText primary="Amora Compara" />
+               <ListItemText primary="aMORA Compara" />
              </ListItem>
 
              <ListItem 
