@@ -22,7 +22,6 @@ export const groupService = {
       id: group.id,
       name: group.name,
       description: group.description,
-      isPublic: group.is_public,
       createdAt: new Date(group.created_at),
       updatedAt: new Date(group.updated_at),
       members: group.group_members?.map((member: any) => ({
@@ -47,13 +46,13 @@ export const groupService = {
   },
 
   // Criar grupo
-  async createGroup(groupData: { name: string; description: string; isPublic: boolean; adminId: string }): Promise<Group> {
+  async createGroup(groupData: { name: string; description: string; adminId: string }): Promise<Group> {
     const { data: groupResult, error: groupError } = await supabase
       .from('groups')
       .insert({
         name: groupData.name,
         description: groupData.description,
-        is_public: groupData.isPublic,
+        is_public: true, // Todos os grupos são públicos agora
         admin_id: groupData.adminId,
       })
       .select()
@@ -76,7 +75,6 @@ export const groupService = {
       id: groupResult.id,
       name: groupResult.name,
       description: groupResult.description,
-      isPublic: groupResult.is_public,
       createdAt: new Date(groupResult.created_at),
       updatedAt: new Date(groupResult.updated_at),
       members: [],
@@ -143,7 +141,6 @@ export const groupService = {
         id: data.group.id,
         name: data.group.name,
         description: data.group.description,
-        isPublic: data.group.is_public,
         createdAt: new Date(data.group.created_at),
         updatedAt: new Date(data.group.updated_at),
         members: [],
@@ -195,7 +192,6 @@ export const groupService = {
         id: member.group.id,
         name: member.group.name,
         description: member.group.description,
-        isPublic: member.group.is_public,
         createdAt: new Date(member.group.created_at),
         updatedAt: new Date(member.group.updated_at),
         members: [],

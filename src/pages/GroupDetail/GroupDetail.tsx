@@ -90,11 +90,23 @@ const GroupDetail: React.FC = () => {
         return;
       }
       
+      if (!user?.id) {
+        setError('Você precisa estar logado para acessar grupos');
+        return;
+      }
+      
       const allGroups = await groupService.getGroups();
       const foundGroup = allGroups.find(g => g.id === groupId);
       
       if (!foundGroup) {
         setError('Grupo não encontrado');
+        return;
+      }
+      
+      // Verificar se o usuário é membro do grupo
+      const isMember = foundGroup.members.some(member => member.userId === user.id);
+      if (!isMember) {
+        setError('Você não tem permissão para acessar este grupo');
         return;
       }
       
@@ -392,11 +404,6 @@ const GroupDetail: React.FC = () => {
             
             {/* Chips informativos */}
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Chip
-                label={group?.isPublic ? 'Público' : 'Privado'}
-                color={group?.isPublic ? 'primary' : 'secondary'}
-                sx={{ fontWeight: 600 }}
-              />
               <Chip
                 label={`${apartments.length} imóve${apartments.length !== 1 ? 'is' : 'l'}`}
                 variant="outlined"

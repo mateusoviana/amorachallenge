@@ -13,9 +13,14 @@ export const useGroups = () => {
     try {
       setLoading(true);
       
+      if (!user?.id) {
+        setUserGroups([]);
+        return;
+      }
+      
       const allGroups = await groupService.getGroups();
       const userGroups = allGroups.filter(group => 
-        group.members.some(member => member.userId === user?.id)
+        group.members.some(member => member.userId === user.id)
       );
 
       setUserGroups(userGroups);
@@ -35,7 +40,7 @@ export const useGroups = () => {
 
 
 
-  const createGroup = async (groupData: Omit<Group, 'id' | 'createdAt' | 'updatedAt' | 'members' | 'apartments'>) => {
+  const createGroup = async (groupData: { name: string; description: string }) => {
     try {
       setLoading(true);
       

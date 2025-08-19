@@ -26,8 +26,8 @@ A aMORA é uma plataforma completa que permite:
 - Sistema de autenticação seguro
 
 ### 👥 Sistema de Grupos
-- Criação de grupos públicos e privados
-- Colaboração entre usuários
+- Criação de grupos colaborativos
+- Acesso restrito apenas a membros do grupo
 - Controle de permissões (Admin/Membro)
 - Organização de imóveis por projeto
 

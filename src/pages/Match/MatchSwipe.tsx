@@ -183,7 +183,6 @@ const MatchSwipe: React.FC = () => {
         group = await groupService.createGroup({
           name: groupName,
           description: `Imóveis ${groupName === 'curtidos' ? 'que você curtiu' : 'que você descartou'} no aMORA Match`,
-          isPublic: false,
           adminId: user.id,
         });
       }

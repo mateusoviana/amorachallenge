@@ -36,7 +36,6 @@ export interface Group {
   id: string;
   name: string;
   description: string;
-  isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;
   members: GroupMember[];
