@@ -8,7 +8,7 @@ import {
   useTheme,
   CircularProgress,
   Alert,
-
+  Fade,
 } from '@mui/material';
 import ApartmentCard from '../../components/ApartmentCard/ApartmentCard';
 import Filters from '../../components/Filters/Filters';
@@ -27,6 +27,27 @@ const Home: React.FC = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Slides content
+  const slides = [
+    {
+      title: "Seu espaço, sua escolha: organize e conquiste o imóvel ideal",
+      subtitle: "Transforme a busca pelo imóvel em uma experiência colaborativa. Corretores podem cadastrar e compartilhar ofertas em grupos, enquanto compradores adicionam opções privadas encontradas fora da plataforma."
+    },
+    {
+      title: "Comentários e reações para uma decisão colaborativa",
+      subtitle: "Com comentários e reações, todos os envolvidos participam ativamente da decisão. E para tornar o sonho da casa própria ainda mais acessível, a aMora oferece a possibilidade de morar no seu apartamento ideal sem preocupações com o valor de entrada."
+    },
+    {
+      title: "💘 aMora Match",
+      subtitle: "Com o aMora Match, a experiência da busca pelo imóvel ideal é gamificada, permitindo que você encontre novas oportunidades de forma dinâmica e intuitiva."
+    },
+    {
+      title: "⚖️ aMora Compara",
+      subtitle: "Com o aMora compara você coloca lado a lado ofertas e compara todos os detalhes dos imóveis, gerando relatórios em pdf para organização própria ou de seu corretor."
+    }
+  ];
 
   const [filters, setFilters] = useState<FilterOptions>({
     priceRange: [0, 2000000],
@@ -49,6 +70,15 @@ const Home: React.FC = () => {
   useEffect(() => {
     applyFilters();
   }, [filters, apartments]);
+
+  // Auto-rotate slides
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 8000); // Change slide every 8 seconds
+
+    return () => clearInterval(interval);
+  }, [slides.length]);
 
   const loadData = async () => {
     try {
@@ -194,63 +224,147 @@ const Home: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
 
-      <Box 
-        sx={{ 
-          mb: 4,
-          p: 4,
-          borderRadius: 3,
-          background: `linear-gradient(180deg, 
-            ${theme.palette.primary.main}15 0%, 
-            ${theme.palette.primary.main}08 30%, 
-            ${theme.palette.primary.main}04 60%, 
-            transparent 100%)`,
-          border: `1px solid ${theme.palette.primary.main}20`,
-          position: 'relative',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            borderRadius: 3,
-            background: `linear-gradient(180deg, 
-              ${theme.palette.secondary.main}10 0%, 
-              ${theme.palette.secondary.main}05 40%, 
-              transparent 100%)`,
-            pointerEvents: 'none',
-          }
-        }}
-      >
-        <Typography
-          variant="h3"
-          component="h1"
-          sx={{
-            fontWeight: 700,
-            color: theme.palette.secondary.main,
-            textAlign: 'center',
-            mb: 2,
-            position: 'relative',
-            zIndex: 1,
-          }}
-        >
-          Encontre seu Imóvel Ideal
-        </Typography>
-                <Typography
-          variant="h6"
-          color="text.secondary"
-          sx={{
-            textAlign: 'center',
-            maxWidth: 600,
-            mx: 'auto',
-            position: 'relative',
-            zIndex: 1,
-          }}
-        >
-          Explore milhares de apartamentos e casas disponíveis para compra.
-          Compare opções e encontre o lugar perfeito para você.
-        </Typography>
-      </Box>
+             {/* Hero Section with Modern Slides */}
+       <Box 
+         sx={{ 
+           mb: 6,
+           position: 'relative',
+           overflow: 'hidden',
+           borderRadius: 4,
+           background: `linear-gradient(135deg, 
+             ${theme.palette.primary.main}08 0%, 
+             ${theme.palette.secondary.main}05 50%, 
+             ${theme.palette.primary.main}03 100%)`,
+           border: `1px solid ${theme.palette.divider}`,
+           boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+         }}
+       >
+         {/* Background Pattern */}
+         <Box sx={{
+           position: 'absolute',
+           top: 0,
+           left: 0,
+           right: 0,
+           bottom: 0,
+           opacity: 0.3,
+           background: `radial-gradient(circle at 20% 80%, ${theme.palette.primary.main}10 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, ${theme.palette.secondary.main}10 0%, transparent 50%)`,
+           pointerEvents: 'none',
+         }} />
+
+                             {/* Slides Container */}
+          <Box sx={{ 
+            position: 'relative', 
+            minHeight: 280,
+            p: 4,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            {slides.map((slide, index) => (
+              <Fade key={index} in={currentSlide === index} timeout={600}>
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    p: 4,
+                    opacity: currentSlide === index ? 1 : 0,
+                    transition: 'opacity 0.6s ease-in-out',
+                  }}
+                >
+                  {/* Slide Content */}
+                  <Box sx={{ 
+                    textAlign: 'center',
+                    maxWidth: 1000,
+                    width: '100%',
+                    py: 2,
+                  }}>
+                    {/* Title */}
+                    <Typography
+                      variant="h2"
+                      component="h1"
+                      sx={{
+                        fontWeight: 800,
+                        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                        backgroundClip: 'text',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        textAlign: 'center',
+                        mb: 3,
+                        fontSize: { xs: '1.6rem', sm: '2rem', md: '2.5rem' },
+                        lineHeight: 1.3,
+                        letterSpacing: '-0.02em',
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                      }}
+                    >
+                      {slide.title}
+                    </Typography>
+                    
+                    {/* Subtitle */}
+                    <Typography
+                      variant="h5"
+                      color="text.secondary"
+                      sx={{
+                        textAlign: 'center',
+                        maxWidth: 800,
+                        mx: 'auto',
+                        fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
+                        lineHeight: 1.6,
+                        fontWeight: 400,
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                      }}
+                    >
+                      {slide.subtitle}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Fade>
+            ))}
+          </Box>
+
+         {/* Modern Slide Indicators */}
+         <Box sx={{ 
+           display: 'flex', 
+           justifyContent: 'center', 
+           pb: 3,
+           gap: 2,
+         }}>
+           {slides.map((_, index) => (
+             <Box
+               key={index}
+               sx={{
+                 width: currentSlide === index ? 40 : 8,
+                 height: 8,
+                 borderRadius: 4,
+                 backgroundColor: currentSlide === index 
+                   ? theme.palette.primary.main 
+                   : theme.palette.grey[300],
+                 cursor: 'pointer',
+                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                 '&:hover': {
+                   backgroundColor: currentSlide === index 
+                     ? theme.palette.primary.dark 
+                     : theme.palette.grey[400],
+                   transform: 'scale(1.2)',
+                 },
+                 boxShadow: currentSlide === index 
+                   ? `0 4px 12px ${theme.palette.primary.main}40`
+                   : 'none',
+               }}
+               onClick={() => setCurrentSlide(index)}
+             />
+           ))}
+         </Box>
+       </Box>
 
       {/* Filtros */}
       <Filters
