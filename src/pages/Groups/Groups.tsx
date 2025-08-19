@@ -52,7 +52,6 @@ import { Group } from '../../types';
 interface CreateGroupData {
   name: string;
   description: string;
-  isPublic: string;
 }
 
 const Groups: React.FC = () => {
@@ -62,13 +61,19 @@ const Groups: React.FC = () => {
   const { userGroups, createGroup, loading, error: groupError } = useGroups();
 
   const [error, setError] = useState<string | null>(null);
+  
+  // Redirecionar se não estiver logado
+  React.useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   // Estados para diálogos
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createGroupData, setCreateGroupData] = useState<CreateGroupData>({
     name: '',
     description: '',
-    isPublic: 'false',
   });
 
   const handleCreateGroup = async () => {
@@ -81,10 +86,9 @@ const Groups: React.FC = () => {
       await createGroup({
         name: createGroupData.name,
         description: createGroupData.description,
-        isPublic: createGroupData.isPublic === 'true',
       });
       
-      setCreateGroupData({ name: '', description: '', isPublic: 'false' });
+      setCreateGroupData({ name: '', description: '' });
       setCreateDialogOpen(false);
       setError(null);
     } catch (err) {

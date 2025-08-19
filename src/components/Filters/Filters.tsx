@@ -40,6 +40,7 @@ interface FiltersProps {
   onFiltersChange: (filters: FilterOptions) => void;
   groups: Group[];
   onClearFilters: () => void;
+  isLoggedIn?: boolean;
 }
 
 const Filters: React.FC<FiltersProps> = ({
@@ -47,6 +48,7 @@ const Filters: React.FC<FiltersProps> = ({
   onFiltersChange,
   groups,
   onClearFilters,
+  isLoggedIn = false,
 }) => {
   const theme = useTheme();
   const [priceAnchorEl, setPriceAnchorEl] = useState<HTMLElement | null>(null);
@@ -308,38 +310,40 @@ const Filters: React.FC<FiltersProps> = ({
              <ArrowDownIcon fontSize="small" color="action" />
            </Button>
 
-                       {/* Grupos */}
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleGroupsClick}
-              sx={{ 
-                flex: { xs: '1 1 calc(50% - 4px)', sm: 1 }, 
-                justifyContent: 'space-between',
-                minHeight: { xs: 36, sm: 40 },
-                py: { xs: 0.5, sm: 1 },
-                fontSize: { xs: '0.75rem', sm: '0.875rem' }
-              }}
-            >
-             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-               <GroupIcon sx={{ color: theme.palette.text.primary }} fontSize="small" />
-                               <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                  {filters.groups.length === 0
-                    ? 'Grupos'
-                    : `${filters.groups.length} grupo${filters.groups.length !== 1 ? 's' : ''}`
-                  }
-                </Typography>
-               {filters.groups.length > 0 && (
-                                   <Chip
-                    label={filters.groups.length}
-                    size="small"
-                    color="primary"
-                    sx={{ height: { xs: 18, sm: 20 }, minWidth: { xs: 18, sm: 20 }, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
-                  />
-               )}
-             </Box>
-             <ArrowDownIcon fontSize="small" color="action" />
-           </Button>
+                       {/* Grupos - apenas para usuários logados */}
+            {isLoggedIn && (
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleGroupsClick}
+                sx={{ 
+                  flex: { xs: '1 1 calc(50% - 4px)', sm: 1 }, 
+                  justifyContent: 'space-between',
+                  minHeight: { xs: 36, sm: 40 },
+                  py: { xs: 0.5, sm: 1 },
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                }}
+              >
+               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                 <GroupIcon sx={{ color: theme.palette.text.primary }} fontSize="small" />
+                                 <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                    {filters.groups.length === 0
+                      ? 'Grupos'
+                      : `${filters.groups.length} grupo${filters.groups.length !== 1 ? 's' : ''}`
+                    }
+                  </Typography>
+                 {filters.groups.length > 0 && (
+                                     <Chip
+                      label={filters.groups.length}
+                      size="small"
+                      color="primary"
+                      sx={{ height: { xs: 18, sm: 20 }, minWidth: { xs: 18, sm: 20 }, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+                    />
+                 )}
+               </Box>
+               <ArrowDownIcon fontSize="small" color="action" />
+             </Button>
+            )}
 
                        {/* Mais Filtros */}
             <Button
@@ -826,36 +830,38 @@ const Filters: React.FC<FiltersProps> = ({
             </Select>
           </FormControl>
 
-          {/* Grupos */}
-          <FormControl fullWidth size="small">
-            <InputLabel>Grupos</InputLabel>
-            <Select
-              multiple
-              value={filters.groups}
-              onChange={(event) => {
-                const value = event.target.value as string[];
-                onFiltersChange({
-                  ...filters,
-                  groups: value,
-                });
-              }}
-              input={<OutlinedInput label="Grupos" />}
-              renderValue={(selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((value) => {
-                    const group = groups.find(g => g.id === value);
-                    return <Chip key={value} label={group?.name || value} size="small" />;
-                  })}
-                </Box>
-              )}
-            >
-              {groups.map((group) => (
-                <MenuItem key={group.id} value={group.id}>
-                  {group.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          {/* Grupos - apenas para usuários logados */}
+          {isLoggedIn && (
+            <FormControl fullWidth size="small">
+              <InputLabel>Grupos</InputLabel>
+              <Select
+                multiple
+                value={filters.groups}
+                onChange={(event) => {
+                  const value = event.target.value as string[];
+                  onFiltersChange({
+                    ...filters,
+                    groups: value,
+                  });
+                }}
+                input={<OutlinedInput label="Grupos" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((value) => {
+                      const group = groups.find(g => g.id === value);
+                      return <Chip key={value} label={group?.name || value} size="small" />;
+                    })}
+                  </Box>
+                )}
+              >
+                {groups.map((group) => (
+                  <MenuItem key={group.id} value={group.id}>
+                    {group.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
 
           {/* Visibilidade */}
           <FormControl fullWidth size="small">

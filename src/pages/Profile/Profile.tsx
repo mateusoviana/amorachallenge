@@ -76,7 +76,6 @@ const Profile: React.FC = () => {
   const [newGroupData, setNewGroupData] = useState({
     name: '',
     description: '',
-    isPublic: false,
   });
 
   useEffect(() => {
@@ -143,11 +142,10 @@ const Profile: React.FC = () => {
       await createGroup({
         name: newGroupData.name,
         description: newGroupData.description,
-        isPublic: newGroupData.isPublic,
       });
       
       setNewGroupDialog(false);
-      setNewGroupData({ name: '', description: '', isPublic: false });
+      setNewGroupData({ name: '', description: '' });
       setSuccess('Grupo criado com sucesso!');
       
     } catch (err) {
@@ -375,11 +373,7 @@ const Profile: React.FC = () => {
                       <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
                         {group.name}
                       </Typography>
-                      <Chip
-                        label={group.isPublic ? 'Público' : 'Privado'}
-                        size="small"
-                        color={group.isPublic ? 'primary' : 'secondary'}
-                      />
+
                     </Box>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       {group.description}
@@ -479,19 +473,7 @@ const Profile: React.FC = () => {
                 placeholder="Descreva o propósito do grupo..."
               />
             </Grid>
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Tipo de Grupo</InputLabel>
-                <Select
-                  value={newGroupData.isPublic ? 'public' : 'private'}
-                  onChange={(e) => setNewGroupData(prev => ({ ...prev, isPublic: e.target.value === 'public' }))}
-                  label="Tipo de Grupo"
-                >
-                  <MenuItem value="private">Privado</MenuItem>
-                  <MenuItem value="public">Público</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
+
           </Grid>
         </DialogContent>
         <DialogActions>

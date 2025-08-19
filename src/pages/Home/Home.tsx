@@ -53,12 +53,19 @@ const Home: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [apartmentsData, groupsData] = await Promise.all([
-        apartmentService.getApartments(user?.id),
-        groupService.getGroups()
-      ]);
+      const apartmentsData = await apartmentService.getApartments(user?.id);
       setApartments(apartmentsData);
-      setGroups(groupsData);
+      
+      // Carregar grupos apenas se o usuário estiver logado
+      if (user?.id) {
+        const allGroups = await groupService.getGroups();
+        const userGroups = allGroups.filter(group => 
+          group.members.some(member => member.userId === user.id)
+        );
+        setGroups(userGroups);
+      } else {
+        setGroups([]);
+      }
     } catch (err) {
       setError('Erro ao carregar dados');
       console.error(err);
@@ -251,6 +258,7 @@ const Home: React.FC = () => {
         onFiltersChange={handleFiltersChange}
         groups={groups}
         onClearFilters={handleClearFilters}
+        isLoggedIn={!!user}
       />
 
       {/* Cards */}
