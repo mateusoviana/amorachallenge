@@ -29,6 +29,7 @@ import {
   SquareFoot as AreaIcon,
   AttachMoney as PriceIcon,
   ArrowBack as ArrowBackIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -48,6 +49,7 @@ const MatchSwipe: React.FC = () => {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+
 
   useEffect(() => {
     loadPreferences();
@@ -153,20 +155,22 @@ const MatchSwipe: React.FC = () => {
      if (currentIndex >= apartments.length) return;
      
      const apartment = apartments[currentIndex];
-     setSwipeDirection('right');
      await addToGroup(apartment, 'curtidos');
-     // Pequeno delay para garantir que o estado seja atualizado
-     setTimeout(() => nextCard(), 50);
+     // Definir direção e executar animação
+     console.log('Curtindo - direção: right');
+     setSwipeDirection('right');
+     setTimeout(() => nextCard('right'), 100);
    };
 
    const handleDislike = async () => {
      if (currentIndex >= apartments.length) return;
      
      const apartment = apartments[currentIndex];
-     setSwipeDirection('left');
      await addToGroup(apartment, 'descartados');
-     // Pequeno delay para garantir que o estado seja atualizado
-     setTimeout(() => nextCard(), 50);
+     // Definir direção e executar animação
+     console.log('Descartando - direção: left');
+     setSwipeDirection('left');
+     setTimeout(() => nextCard('left'), 100);
    };
 
     const addToGroup = async (apartment: Apartment, groupName: string) => {
@@ -202,12 +206,14 @@ const MatchSwipe: React.FC = () => {
     }
   };
 
-  const nextCard = () => {
+  const nextCard = (direction?: 'left' | 'right') => {
     // Animar o card saindo da tela
     const cardElement = document.querySelector('.swipe-card') as HTMLElement;
     if (cardElement) {
-      const direction = swipeDirection === 'right' ? 500 : -500;
-      cardElement.style.transform = `translateX(${direction}px) rotate(${direction * 0.1}deg)`;
+      const swipeDirectionValue = direction || swipeDirection;
+      const translateX = swipeDirectionValue === 'right' ? 500 : -500;
+      console.log(`nextCard - direção: ${swipeDirectionValue}, translateX: ${translateX}`);
+      cardElement.style.transform = `translateX(${translateX}px) rotate(${translateX * 0.1}deg)`;
       cardElement.style.opacity = '0';
     }
     
@@ -334,240 +340,334 @@ const MatchSwipe: React.FC = () => {
     );
   }
 
-  return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <IconButton onClick={() => navigate('/')}>
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h5" sx={{ fontWeight: 600 }}>
-          aMORA Match
-        </Typography>
-        <IconButton onClick={() => setShowPreferencesDialog(true)}>
-          <SettingsIcon />
-        </IconButton>
-      </Box>
+           return (
+      <Box sx={{ 
+        height: '100vh', 
+        display: 'flex', 
+        flexDirection: 'column',
+        px: { xs: 1, sm: 3 },
+        py: { xs: 0.5, sm: 2 }
+      }}>
+        {/* Header */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          mb: { xs: 0.5, sm: 2 },
+          flexShrink: 0,
+          py: { xs: 0.5, sm: 1 }
+        }}>
+          <IconButton onClick={() => navigate('/')} size="small">
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography variant="h5" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.5rem' } }}>
+            aMORA Match
+          </Typography>
+          <IconButton onClick={() => setShowPreferencesDialog(true)} size="small">
+            <SettingsIcon />
+          </IconButton>
+        </Box>
 
-      {/* Card Principal */}
-      <Box sx={{ position: 'relative', mb: 3 }}>
-                 <Card
-           className="swipe-card"
-           sx={{
-             width: '100%',
-             maxWidth: 400,
-             mx: 'auto',
-             cursor: 'grab',
-             transform: `translateX(${swipeOffset}px) rotate(${swipeOffset * 0.1}deg)`,
-             transition: isDragging ? 'none' : 'all 0.3s ease',
-             border: swipeDirection === 'right' ? '3px solid #4caf50' : 
-                    swipeDirection === 'left' ? '3px solid #f44336' : 'none',
-             boxShadow: swipeDirection ? '0 10px 30px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.1)',
-             opacity: 1,
-             '&:active': {
-               cursor: 'grabbing',
-             },
-           }}
-           onMouseDown={handleMouseDown}
-           onMouseMove={handleMouseMove}
-           onMouseUp={handleMouseUp}
-           onMouseLeave={handleMouseUp}
-           onTouchStart={handleTouchStart}
-           onTouchMove={handleTouchMove}
-           onTouchEnd={handleTouchEnd}
-         >
-          <CardMedia
-            component="img"
-            height="300"
-            image={currentApartment.images && currentApartment.images.length > 0 
-              ? currentApartment.images[0] 
-              : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0yMDAgMTUwQzE4OC45NTQgMTUwIDE4MCAxNDEuMDQ2IDE4MCAxMzBDMTgwIDExOC45NTQgMTg4Ljk1NCAxMTAgMjAwIDExMEMyMTEuMDQ2IDExMCAyMjAgMTE4Ljk1NCAyMjAgMTMwQzIyMCAxNDEuMDQ2IDIxMS4wNDYgMTUwIDIwMCAxNTBaIiBmaWxsPSIjQ0NDIi8+CjxwYXRoIGQ9Ik0xODAgMTgwQzE4MCAxNjguOTU0IDE4OC45NTQgMTYwIDIwMCAxNjBDMjExLjA0NiAxNjAgMjIwIDE2OC45NTQgMjIwIDE4MFYyMjBDMjIwIDIzMS4wNDYgMjExLjA0NiAyNDAgMjAwIDI0MEMxODguOTU0IDI0MCAxODAgMjMxLjA0NiAxODAgMjIwVjE4MFoiIGZpbGw9IiNDQ0MiLz4KPC9zdmc+'
-            }
-            alt={currentApartment.title}
-            sx={{ objectFit: 'cover' }}
-          />
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
-              {currentApartment.title}
-            </Typography>
-            
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <LocationIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
-              <Typography variant="body1">
-                {currentApartment.neighborhood}, {currentApartment.city}
-              </Typography>
-            </Box>
+        {/* Card Principal */}
+        <Box sx={{ 
+          position: 'relative', 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          mb: { xs: 1, sm: 3 }
+        }}>
+                   <Card
+             className="swipe-card"
+             sx={{
+               width: '100%',
+               height: { xs: 'calc(100vh - 200px)', sm: 'auto' },
+               maxWidth: { xs: '100%', sm: 400 },
+               mx: 'auto',
+               cursor: 'grab',
+               transform: `translateX(${swipeOffset}px) rotate(${swipeOffset * 0.1}deg)`,
+               transition: isDragging ? 'none' : 'all 0.3s ease',
+               border: swipeDirection === 'right' ? '3px solid #4caf50' : 
+                      swipeDirection === 'left' ? '3px solid #f44336' : 'none',
+               boxShadow: swipeDirection ? '0 10px 30px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.1)',
+               opacity: 1,
+               display: 'flex',
+               flexDirection: 'column',
+               '&:active': {
+                 cursor: 'grabbing',
+               },
+             }}
+             onMouseDown={handleMouseDown}
+             onMouseMove={handleMouseMove}
+             onMouseUp={handleMouseUp}
+             onMouseLeave={handleMouseUp}
+             onTouchStart={handleTouchStart}
+             onTouchMove={handleTouchMove}
+             onTouchEnd={handleTouchEnd}
+           >
+                        <CardMedia
+               component="img"
+               height="300"
+               image={currentApartment.images && currentApartment.images.length > 0 
+                 ? currentApartment.images[0] 
+                 : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0yMDAgMTUwQzE4OC45NTQgMTUwIDE4MCAxNDEuMDQ2IDE4MCAxMzBDMTgwIDExOC45NTQgMTg4Ljk1NCAxMTAgMjAwIDExMEMyMTEuMDQ2IDExMCAyMjAgMTE4Ljk1NCAyMjAgMTMwQzIyMCAxNDEuMDQ2IDIxMS4wNDYgMTUwIDIwMCAxNTBaIiBmaWxsPSIjQ0NDIi8+CjxwYXRoIGQ9Ik0xODAgMTgwQzE4MCAxNjguOTU0IDE4OC45NTQgMTYwIDIwMCAxNjBDMjExLjA0NiAxNjAgMjIwIDE2OC45NTQgMjIwIDE4MFYyMjBDMjIwIDIzMS4wNDYgMjExLjA0NiAyNDAgMjAwIDI0MEMxODguOTU0IDI0MCAxODAgMjMxLjA0NiAxODAgMjIwVjE4MFoiIGZpbGw9IiNDQ0MiLz4KPC9zdmc+'
+               }
+               alt={currentApartment.title}
+               sx={{ 
+                 objectFit: 'cover',
+                 height: { xs: '45%', sm: 300 },
+                 flexShrink: 0
+               }}
+             />
+            <CardContent sx={{ 
+              p: { xs: 1.5, sm: 3 },
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between'
+            }}>
+              <Box>
+                               <Typography variant="h5" gutterBottom sx={{ 
+                 fontWeight: 600,
+                 fontSize: { xs: '1.2rem', sm: '1.5rem' },
+                 mb: { xs: 0.5, sm: 1 }
+               }}>
+                 {currentApartment.title}
+               </Typography>
+               
+               <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 0.5, sm: 2 } }}>
+                 <LocationIcon sx={{ mr: 1, color: theme.palette.primary.main, fontSize: { xs: '1.1rem', sm: '1.5rem' } }} />
+                 <Typography variant="body1" sx={{ fontSize: { xs: '1rem', sm: '1rem' } }}>
+                   {currentApartment.neighborhood}, {currentApartment.city}
+                 </Typography>
+               </Box>
 
-            <Grid container spacing={2} sx={{ mb: 2 }}>
-              <Grid item xs={6}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <PriceIcon sx={{ mr: 1, color: theme.palette.success.main }} />
-                  <Typography variant="h6" color="success.main" sx={{ fontWeight: 600 }}>
-                    R$ {(currentApartment.price / 1000).toFixed(0)}k
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={6}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <AreaIcon sx={{ mr: 1, color: theme.palette.info.main }} />
-                  <Typography variant="body1">
-                    {currentApartment.area}m²
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={6}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <HotelIcon sx={{ mr: 1, color: theme.palette.warning.main }} />
-                  <Typography variant="body1">
-                    {currentApartment.bedrooms} quarto{currentApartment.bedrooms !== 1 ? 's' : ''}
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={6}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <BathtubIcon sx={{ mr: 1, color: theme.palette.warning.main }} />
-                  <Typography variant="body1">
-                    {currentApartment.bathrooms} banheiro{currentApartment.bathrooms !== 1 ? 's' : ''}
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
+                               <Grid container spacing={{ xs: 0.5, sm: 2 }} sx={{ mb: { xs: 0.5, sm: 2 } }}>
+                  <Grid item xs={6}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <PriceIcon sx={{ mr: 0.5, color: theme.palette.success.main, fontSize: { xs: '1.1rem', sm: '1.5rem' } }} />
+                      <Typography variant="h6" color="success.main" sx={{ 
+                        fontWeight: 600,
+                        fontSize: { xs: '1rem', sm: '1.25rem' }
+                      }}>
+                        R$ {(currentApartment.price / 1000).toFixed(0)}k
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <AreaIcon sx={{ mr: 0.5, color: theme.palette.info.main, fontSize: { xs: '1.1rem', sm: '1.5rem' } }} />
+                      <Typography variant="body1" sx={{ fontSize: { xs: '1rem', sm: '1rem' } }}>
+                        {currentApartment.area}m²
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <HotelIcon sx={{ mr: 0.5, color: theme.palette.warning.main, fontSize: { xs: '1.1rem', sm: '1.5rem' } }} />
+                      <Typography variant="body1" sx={{ fontSize: { xs: '1rem', sm: '1rem' } }}>
+                        {currentApartment.bedrooms} quarto{currentApartment.bedrooms !== 1 ? 's' : ''}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <BathtubIcon sx={{ mr: 0.5, color: theme.palette.warning.main, fontSize: { xs: '1.1rem', sm: '1.5rem' } }} />
+                      <Typography variant="body1" sx={{ fontSize: { xs: '1rem', sm: '1rem' } }}>
+                        {currentApartment.bathrooms} banheiro{currentApartment.bathrooms !== 1 ? 's' : ''}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
 
-            <Typography variant="body2" color="text.secondary">
-              {currentApartment.description}
-            </Typography>
-          </CardContent>
-        </Card>
+              <Box sx={{ mt: 'auto' }}>
+                <Typography variant="body2" color="text.secondary" sx={{ 
+                  fontSize: { xs: '0.85rem', sm: '0.875rem' },
+                  display: { xs: 'block', sm: 'block' },
+                  mb: { xs: 1, sm: 2 }
+                }}>
+                  {currentApartment.description}
+                </Typography>
 
-        {/* Indicadores de Swipe */}
-        {swipeDirection === 'right' && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '20px',
-              transform: 'translateY(-50%) rotate(-30deg)',
-              zIndex: 10,
-            }}
-          >
-            <Chip
-              label="CURTIU"
-              color="success"
-              sx={{ fontSize: '1.2rem', fontWeight: 600, p: 2 }}
-            />
-          </Box>
-        )}
+                                 {/* Botão Mais Informações */}
+                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                   <Button
+                     variant="outlined"
+                     startIcon={<InfoIcon />}
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       navigate(`/apartment/${currentApartment.id}`);
+                     }}
+                     sx={{
+                       fontSize: { xs: '0.9rem', sm: '1rem' },
+                       py: { xs: 0.5, sm: 1 },
+                       px: { xs: 1.5, sm: 2 },
+                       borderRadius: 2,
+                       borderColor: theme.palette.primary.main,
+                       color: theme.palette.primary.main,
+                       '&:hover': {
+                         backgroundColor: theme.palette.primary.main,
+                         color: 'white',
+                       },
+                     }}
+                   >
+                     Ver Detalhes
+                   </Button>
+                 </Box>
+              </Box>
+            </CardContent>
+          </Card>
 
-        {swipeDirection === 'left' && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              right: '20px',
-              transform: 'translateY(-50%) rotate(30deg)',
-              zIndex: 10,
-            }}
-          >
-            <Chip
-              label="DESCARTAR"
-              color="error"
-              sx={{ fontSize: '1.2rem', fontWeight: 600, p: 2 }}
-            />
-          </Box>
-        )}
-      </Box>
+         {/* Indicadores de Swipe */}
+         {swipeDirection === 'right' && (
+           <Box
+             sx={{
+               position: 'absolute',
+               top: '50%',
+               left: '20px',
+               transform: 'translateY(-50%) rotate(-30deg)',
+               zIndex: 10,
+             }}
+           >
+             <Chip
+               label="CURTIU"
+               color="success"
+               sx={{ 
+                 fontSize: { xs: '1rem', sm: '1.2rem' }, 
+                 fontWeight: 600, 
+                 p: { xs: 1, sm: 2 } 
+               }}
+             />
+           </Box>
+         )}
 
-             {/* Botões de Ação */}
-       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
-         <Fab
-           color="error"
-           size="large"
-           onClick={handleDislike}
-           sx={{ 
-             width: 70, 
-             height: 70,
-             boxShadow: '0 4px 20px rgba(244, 67, 54, 0.3)',
-             transition: 'all 0.3s ease',
-             '&:hover': {
-               transform: 'scale(1.1)',
-               boxShadow: '0 6px 25px rgba(244, 67, 54, 0.4)',
-             },
-             '&:active': {
-               transform: 'scale(0.95)',
-             },
-           }}
-         >
-           <CloseIcon sx={{ fontSize: 30 }} />
-         </Fab>
-
-         <Fab
-           color="success"
-           size="large"
-           onClick={handleLike}
-           sx={{ 
-             width: 70, 
-             height: 70,
-             boxShadow: '0 4px 20px rgba(76, 175, 80, 0.3)',
-             transition: 'all 0.3s ease',
-             '&:hover': {
-               transform: 'scale(1.1)',
-               boxShadow: '0 6px 25px rgba(76, 175, 80, 0.4)',
-             },
-             '&:active': {
-               transform: 'scale(0.95)',
-             },
-           }}
-         >
-           <FavoriteIcon sx={{ fontSize: 30 }} />
-         </Fab>
+         {swipeDirection === 'left' && (
+           <Box
+             sx={{
+               position: 'absolute',
+               top: '50%',
+               right: '20px',
+               transform: 'translateY(-50%) rotate(30deg)',
+               zIndex: 10,
+             }}
+           >
+             <Chip
+               label="DESCARTAR"
+               color="error"
+               sx={{ 
+                 fontSize: { xs: '1rem', sm: '1.2rem' }, 
+                 fontWeight: 600, 
+                 p: { xs: 1, sm: 2 } 
+               }}
+             />
+           </Box>
+         )}
        </Box>
 
-      {/* Contador */}
-      <Box sx={{ textAlign: 'center', mt: 3 }}>
-        <Typography variant="body2" color="text.secondary">
-          {currentIndex + 1} de {apartments.length} imóveis
-        </Typography>
-      </Box>
+                             {/* Botões de Ação */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          gap: { xs: 1.5, sm: 3 },
+          mb: { xs: 0.5, sm: 2 },
+          flexShrink: 0
+        }}>
+          <Fab
+            color="error"
+            size="large"
+            onClick={handleDislike}
+            sx={{ 
+              width: { xs: 55, sm: 70 }, 
+              height: { xs: 55, sm: 70 },
+              boxShadow: '0 4px 20px rgba(244, 67, 54, 0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.1)',
+                boxShadow: '0 6px 25px rgba(244, 67, 54, 0.4)',
+              },
+              '&:active': {
+                transform: 'scale(0.95)',
+              },
+            }}
+          >
+            <CloseIcon sx={{ fontSize: { xs: 22, sm: 30 } }} />
+          </Fab>
 
-      {/* Dialog de Preferências */}
-      <Dialog
-        open={showPreferencesDialog}
-        onClose={() => setShowPreferencesDialog(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Configurar Preferências</DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ mb: 2 }}>
-            Deseja ajustar suas preferências? Isso irá recarregar os imóveis disponíveis.
+          <Fab
+            color="success"
+            size="large"
+            onClick={handleLike}
+            sx={{ 
+              width: { xs: 55, sm: 70 }, 
+              height: { xs: 55, sm: 70 },
+              boxShadow: '0 4px 20px rgba(76, 175, 80, 0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.1)',
+                boxShadow: '0 6px 25px rgba(76, 175, 80, 0.4)',
+              },
+              '&:active': {
+                transform: 'scale(0.95)',
+              },
+            }}
+          >
+            <FavoriteIcon sx={{ fontSize: { xs: 22, sm: 30 } }} />
+          </Fab>
+        </Box>
+
+        {/* Contador */}
+        <Box sx={{ 
+          textAlign: 'center', 
+          mb: { xs: 0.5, sm: 2 },
+          flexShrink: 0
+        }}>
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}>
+            {currentIndex + 1} de {apartments.length} imóveis
           </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowPreferencesDialog(false)}>
-            Cancelar
-          </Button>
-                     <Button 
-             onClick={() => {
-               setShowPreferencesDialog(false);
-               navigate('/match/setup');
-             }}
-             variant="contained"
-           >
-             Configurar
-           </Button>
-           <Button 
-             onClick={() => {
-               setShowPreferencesDialog(false);
-               loadApartments(); // Recarregar com as mesmas preferências
-             }}
-             variant="outlined"
-           >
-             Recarregar
-           </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
-  );
-};
+        </Box>
 
-export default MatchSwipe;
+                           
+
+              {/* Dialog de Preferências */}
+        <Dialog
+          open={showPreferencesDialog}
+          onClose={() => setShowPreferencesDialog(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>Configurar Preferências</DialogTitle>
+          <DialogContent>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              Deseja ajustar suas preferências? Isso irá recarregar os imóveis disponíveis.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowPreferencesDialog(false)}>
+              Cancelar
+            </Button>
+                       <Button 
+               onClick={() => {
+                 setShowPreferencesDialog(false);
+                 navigate('/match/setup');
+               }}
+               variant="contained"
+             >
+               Configurar
+             </Button>
+             <Button 
+               onClick={() => {
+                 setShowPreferencesDialog(false);
+                 loadApartments(); // Recarregar com as mesmas preferências
+               }}
+               variant="outlined"
+             >
+               Recarregar
+             </Button>
+          </DialogActions>
+        </Dialog>
+     </Box>
+   );
+ };
+ 
+ export default MatchSwipe;
