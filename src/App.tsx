@@ -14,6 +14,7 @@ import Groups from './pages/Groups/Groups';
 import GroupDetail from './pages/GroupDetail/GroupDetail';
 import Login from './pages/Login/Login';
 import { Compare, CompareSelect, CompareResult } from './pages/Compare';
+import { MatchSetup, MatchSwipe, MatchRedirect } from './pages/Match';
 
 const App: React.FC = () => {
   return (
@@ -36,6 +37,9 @@ const App: React.FC = () => {
                 <Route path="/compare" element={<Compare />} />
                 <Route path="/compare/select" element={<CompareSelect />} />
                 <Route path="/compare/result" element={<CompareResult />} />
+                <Route path="/match" element={<MatchRedirect />} />
+                <Route path="/match/setup" element={<MatchSetup />} />
+                <Route path="/match/swipe" element={<MatchSwipe />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Box>

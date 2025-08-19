@@ -1,0 +1,573 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Container,
+  Typography,
+  Card,
+  CardContent,
+  CardMedia,
+  Button,
+  IconButton,
+  Fab,
+  useTheme,
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Chip,
+  Grid,
+  Paper,
+} from '@mui/material';
+import {
+  Favorite as FavoriteIcon,
+  Close as CloseIcon,
+  Settings as SettingsIcon,
+  LocationOn as LocationIcon,
+  Hotel as HotelIcon,
+  Bathtub as BathtubIcon,
+  SquareFoot as AreaIcon,
+  AttachMoney as PriceIcon,
+  ArrowBack as ArrowBackIcon,
+} from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
+import { Apartment } from '../../types';
+import { apartmentService } from '../../services/apartmentService';
+import { groupService } from '../../services/groupService';
+
+const MatchSwipe: React.FC = () => {
+  const theme = useTheme();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [apartments, setApartments] = useState<Apartment[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [preferences, setPreferences] = useState<any>(null);
+  const [showPreferencesDialog, setShowPreferencesDialog] = useState(false);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    loadPreferences();
+  }, []);
+
+  useEffect(() => {
+    if (preferences) {
+      loadApartments();
+    }
+  }, [preferences]);
+
+  const loadPreferences = () => {
+    const savedPreferences = localStorage.getItem('matchPreferences');
+    const setupCompleted = localStorage.getItem('matchSetupCompleted');
+    
+    if (savedPreferences && setupCompleted === 'true') {
+      setPreferences(JSON.parse(savedPreferences));
+    } else {
+      navigate('/match/setup');
+    }
+  };
+
+  const loadApartments = async () => {
+    try {
+      setLoading(true);
+      const allApartments = await apartmentService.getApartments();
+      
+      // Buscar grupos de curtidos e descartados para filtrar
+      let likedApartments: string[] = [];
+      let dislikedApartments: string[] = [];
+      
+             if (user) {
+         try {
+           const groups = await groupService.getGroups();
+           const likedGroup = groups.find(g => g.name.toLowerCase() === 'curtidos');
+           const dislikedGroup = groups.find(g => g.name.toLowerCase() === 'descartados');
+           
+           if (likedGroup) {
+             const likedApartmentsData = await groupService.getApartmentsByGroup(likedGroup.id);
+             likedApartments = likedApartmentsData.map((apt: Apartment) => apt.id);
+           }
+           
+           if (dislikedGroup) {
+             const dislikedApartmentsData = await groupService.getApartmentsByGroup(dislikedGroup.id);
+             dislikedApartments = dislikedApartmentsData.map((apt: Apartment) => apt.id);
+           }
+         } catch (error) {
+           console.error('Erro ao carregar grupos:', error);
+         }
+       }
+      
+      // Filtrar apartamentos baseado nas preferências e status de curtir/descartar
+      const filteredApartments = allApartments.filter(apartment => {
+        // Não mostrar apartamentos já curtidos ou descartados
+        if (likedApartments.includes(apartment.id) || dislikedApartments.includes(apartment.id)) {
+          return false;
+        }
+        
+        if (!preferences) return true;
+        
+        // Filtro por preço
+        if (apartment.price < preferences.priceRange[0] || apartment.price > preferences.priceRange[1]) {
+          return false;
+        }
+        
+        // Filtro por área
+        if (apartment.area < preferences.areaRange[0] || apartment.area > preferences.areaRange[1]) {
+          return false;
+        }
+        
+        // Filtro por quartos
+        if (preferences.bedrooms.length > 0 && !preferences.bedrooms.includes(apartment.bedrooms)) {
+          return false;
+        }
+        
+        // Filtro por banheiros
+        if (preferences.bathrooms.length > 0 && !preferences.bathrooms.includes(apartment.bathrooms)) {
+          return false;
+        }
+        
+        // Filtro por cidade
+        if (preferences.cities.length > 0 && !preferences.cities.includes(apartment.city)) {
+          return false;
+        }
+        
+        // Filtro por bairro
+        if (preferences.neighborhoods.length > 0 && !preferences.neighborhoods.includes(apartment.neighborhood)) {
+          return false;
+        }
+        
+        return true;
+      });
+      
+      setApartments(filteredApartments);
+    } catch (error) {
+      console.error('Erro ao carregar apartamentos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+     const handleLike = async () => {
+     if (currentIndex >= apartments.length) return;
+     
+     const apartment = apartments[currentIndex];
+     setSwipeDirection('right');
+     await addToGroup(apartment, 'curtidos');
+     // Pequeno delay para garantir que o estado seja atualizado
+     setTimeout(() => nextCard(), 50);
+   };
+
+   const handleDislike = async () => {
+     if (currentIndex >= apartments.length) return;
+     
+     const apartment = apartments[currentIndex];
+     setSwipeDirection('left');
+     await addToGroup(apartment, 'descartados');
+     // Pequeno delay para garantir que o estado seja atualizado
+     setTimeout(() => nextCard(), 50);
+   };
+
+    const addToGroup = async (apartment: Apartment, groupName: string) => {
+    if (!user) return;
+    
+    try {
+      // Buscar ou criar o grupo
+      let group = await groupService.getGroups().then(groups => 
+        groups.find(g => g.name.toLowerCase() === groupName.toLowerCase())
+      );
+      
+      if (!group) {
+        // Criar o grupo se não existir
+        group = await groupService.createGroup({
+          name: groupName,
+          description: `Imóveis ${groupName === 'curtidos' ? 'que você curtiu' : 'que você descartou'} no aMORA Match`,
+          isPublic: false,
+          adminId: user.id,
+        });
+      }
+      
+             // Verificar se o apartamento já está no grupo
+       const groupApartments = await groupService.getApartmentsByGroup(group.id);
+       const apartmentExists = groupApartments.some((apt: Apartment) => apt.id === apartment.id);
+       
+       if (!apartmentExists) {
+         // Adicionar apartamento ao grupo
+         await groupService.addApartmentToGroup(apartment.id, group.id);
+         console.log(`Apartamento ${apartment.title} adicionado ao grupo ${groupName}`);
+       }
+    } catch (error) {
+      console.error('Erro ao adicionar ao grupo:', error);
+    }
+  };
+
+  const nextCard = () => {
+    // Animar o card saindo da tela
+    const cardElement = document.querySelector('.swipe-card') as HTMLElement;
+    if (cardElement) {
+      const direction = swipeDirection === 'right' ? 500 : -500;
+      cardElement.style.transform = `translateX(${direction}px) rotate(${direction * 0.1}deg)`;
+      cardElement.style.opacity = '0';
+    }
+    
+    // Aguardar a animação terminar antes de mudar o card
+    setTimeout(() => {
+      setCurrentIndex(prev => prev + 1);
+      setSwipeDirection(null);
+      setSwipeOffset(0);
+      
+      // Resetar o card para a próxima animação
+      if (cardElement) {
+        cardElement.style.transform = '';
+        cardElement.style.opacity = '';
+      }
+    }, 300);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    
+    const card = e.currentTarget as HTMLElement;
+    const rect = card.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const offsetX = e.clientX - centerX;
+    
+    setSwipeOffset(offsetX);
+    
+    if (offsetX > 100) {
+      setSwipeDirection('right');
+    } else if (offsetX < -100) {
+      setSwipeDirection('left');
+    } else {
+      setSwipeDirection(null);
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    
+    setIsDragging(false);
+    
+    if (swipeDirection === 'right') {
+      handleLike();
+    } else if (swipeDirection === 'left') {
+      handleDislike();
+    } else {
+      setSwipeOffset(0);
+      setSwipeDirection(null);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    
+    const touch = e.touches[0];
+    const card = e.currentTarget as HTMLElement;
+    const rect = card.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const offsetX = touch.clientX - centerX;
+    
+    setSwipeOffset(offsetX);
+    
+    if (offsetX > 100) {
+      setSwipeDirection('right');
+    } else if (offsetX < -100) {
+      setSwipeDirection('left');
+    } else {
+      setSwipeDirection(null);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    
+    setIsDragging(false);
+    
+    if (swipeDirection === 'right') {
+      handleLike();
+    } else if (swipeDirection === 'left') {
+      handleDislike();
+    } else {
+      setSwipeOffset(0);
+      setSwipeDirection(null);
+    }
+  };
+
+  const currentApartment = apartments[currentIndex];
+
+  if (loading) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
+        <Typography variant="h6">Carregando imóveis...</Typography>
+      </Container>
+    );
+  }
+
+  if (currentIndex >= apartments.length) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" gutterBottom>
+            Não há mais imóveis!
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Você viu todos os imóveis disponíveis. Tente ajustar suas preferências.
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          onClick={() => setShowPreferencesDialog(true)}
+          startIcon={<SettingsIcon />}
+        >
+          Ajustar Preferências
+        </Button>
+      </Container>
+    );
+  }
+
+  return (
+    <Container maxWidth="sm" sx={{ py: 4 }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <IconButton onClick={() => navigate('/')}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h5" sx={{ fontWeight: 600 }}>
+          aMORA Match
+        </Typography>
+        <IconButton onClick={() => setShowPreferencesDialog(true)}>
+          <SettingsIcon />
+        </IconButton>
+      </Box>
+
+      {/* Card Principal */}
+      <Box sx={{ position: 'relative', mb: 3 }}>
+                 <Card
+           className="swipe-card"
+           sx={{
+             width: '100%',
+             maxWidth: 400,
+             mx: 'auto',
+             cursor: 'grab',
+             transform: `translateX(${swipeOffset}px) rotate(${swipeOffset * 0.1}deg)`,
+             transition: isDragging ? 'none' : 'all 0.3s ease',
+             border: swipeDirection === 'right' ? '3px solid #4caf50' : 
+                    swipeDirection === 'left' ? '3px solid #f44336' : 'none',
+             boxShadow: swipeDirection ? '0 10px 30px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.1)',
+             opacity: 1,
+             '&:active': {
+               cursor: 'grabbing',
+             },
+           }}
+           onMouseDown={handleMouseDown}
+           onMouseMove={handleMouseMove}
+           onMouseUp={handleMouseUp}
+           onMouseLeave={handleMouseUp}
+           onTouchStart={handleTouchStart}
+           onTouchMove={handleTouchMove}
+           onTouchEnd={handleTouchEnd}
+         >
+          <CardMedia
+            component="img"
+            height="300"
+            image={currentApartment.images && currentApartment.images.length > 0 
+              ? currentApartment.images[0] 
+              : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0yMDAgMTUwQzE4OC45NTQgMTUwIDE4MCAxNDEuMDQ2IDE4MCAxMzBDMTgwIDExOC45NTQgMTg4Ljk1NCAxMTAgMjAwIDExMEMyMTEuMDQ2IDExMCAyMjAgMTE4Ljk1NCAyMjAgMTMwQzIyMCAxNDEuMDQ2IDIxMS4wNDYgMTUwIDIwMCAxNTBaIiBmaWxsPSIjQ0NDIi8+CjxwYXRoIGQ9Ik0xODAgMTgwQzE4MCAxNjguOTU0IDE4OC45NTQgMTYwIDIwMCAxNjBDMjExLjA0NiAxNjAgMjIwIDE2OC45NTQgMjIwIDE4MFYyMjBDMjIwIDIzMS4wNDYgMjExLjA0NiAyNDAgMjAwIDI0MEMxODguOTU0IDI0MCAxODAgMjMxLjA0NiAxODAgMjIwVjE4MFoiIGZpbGw9IiNDQ0MiLz4KPC9zdmc+'
+            }
+            alt={currentApartment.title}
+            sx={{ objectFit: 'cover' }}
+          />
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+              {currentApartment.title}
+            </Typography>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <LocationIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+              <Typography variant="body1">
+                {currentApartment.neighborhood}, {currentApartment.city}
+              </Typography>
+            </Box>
+
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={6}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <PriceIcon sx={{ mr: 1, color: theme.palette.success.main }} />
+                  <Typography variant="h6" color="success.main" sx={{ fontWeight: 600 }}>
+                    R$ {(currentApartment.price / 1000).toFixed(0)}k
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={6}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <AreaIcon sx={{ mr: 1, color: theme.palette.info.main }} />
+                  <Typography variant="body1">
+                    {currentApartment.area}m²
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={6}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <HotelIcon sx={{ mr: 1, color: theme.palette.warning.main }} />
+                  <Typography variant="body1">
+                    {currentApartment.bedrooms} quarto{currentApartment.bedrooms !== 1 ? 's' : ''}
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={6}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <BathtubIcon sx={{ mr: 1, color: theme.palette.warning.main }} />
+                  <Typography variant="body1">
+                    {currentApartment.bathrooms} banheiro{currentApartment.bathrooms !== 1 ? 's' : ''}
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+
+            <Typography variant="body2" color="text.secondary">
+              {currentApartment.description}
+            </Typography>
+          </CardContent>
+        </Card>
+
+        {/* Indicadores de Swipe */}
+        {swipeDirection === 'right' && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '20px',
+              transform: 'translateY(-50%) rotate(-30deg)',
+              zIndex: 10,
+            }}
+          >
+            <Chip
+              label="CURTIU"
+              color="success"
+              sx={{ fontSize: '1.2rem', fontWeight: 600, p: 2 }}
+            />
+          </Box>
+        )}
+
+        {swipeDirection === 'left' && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              right: '20px',
+              transform: 'translateY(-50%) rotate(30deg)',
+              zIndex: 10,
+            }}
+          >
+            <Chip
+              label="DESCARTAR"
+              color="error"
+              sx={{ fontSize: '1.2rem', fontWeight: 600, p: 2 }}
+            />
+          </Box>
+        )}
+      </Box>
+
+             {/* Botões de Ação */}
+       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
+         <Fab
+           color="error"
+           size="large"
+           onClick={handleDislike}
+           sx={{ 
+             width: 70, 
+             height: 70,
+             boxShadow: '0 4px 20px rgba(244, 67, 54, 0.3)',
+             transition: 'all 0.3s ease',
+             '&:hover': {
+               transform: 'scale(1.1)',
+               boxShadow: '0 6px 25px rgba(244, 67, 54, 0.4)',
+             },
+             '&:active': {
+               transform: 'scale(0.95)',
+             },
+           }}
+         >
+           <CloseIcon sx={{ fontSize: 30 }} />
+         </Fab>
+
+         <Fab
+           color="success"
+           size="large"
+           onClick={handleLike}
+           sx={{ 
+             width: 70, 
+             height: 70,
+             boxShadow: '0 4px 20px rgba(76, 175, 80, 0.3)',
+             transition: 'all 0.3s ease',
+             '&:hover': {
+               transform: 'scale(1.1)',
+               boxShadow: '0 6px 25px rgba(76, 175, 80, 0.4)',
+             },
+             '&:active': {
+               transform: 'scale(0.95)',
+             },
+           }}
+         >
+           <FavoriteIcon sx={{ fontSize: 30 }} />
+         </Fab>
+       </Box>
+
+      {/* Contador */}
+      <Box sx={{ textAlign: 'center', mt: 3 }}>
+        <Typography variant="body2" color="text.secondary">
+          {currentIndex + 1} de {apartments.length} imóveis
+        </Typography>
+      </Box>
+
+      {/* Dialog de Preferências */}
+      <Dialog
+        open={showPreferencesDialog}
+        onClose={() => setShowPreferencesDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Configurar Preferências</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            Deseja ajustar suas preferências? Isso irá recarregar os imóveis disponíveis.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowPreferencesDialog(false)}>
+            Cancelar
+          </Button>
+                     <Button 
+             onClick={() => {
+               setShowPreferencesDialog(false);
+               navigate('/match/setup');
+             }}
+             variant="contained"
+           >
+             Configurar
+           </Button>
+           <Button 
+             onClick={() => {
+               setShowPreferencesDialog(false);
+               loadApartments(); // Recarregar com as mesmas preferências
+             }}
+             variant="outlined"
+           >
+             Recarregar
+           </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
+  );
+};
+
+export default MatchSwipe;

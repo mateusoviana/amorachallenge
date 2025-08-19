@@ -9,6 +9,12 @@ import {
   Avatar,
   Box,
   useTheme,
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -19,6 +25,9 @@ import {
   Dashboard as DashboardIcon,
   Group as GroupIcon,
   Compare as CompareIcon,
+  Menu as MenuIcon,
+  Close as CloseIcon,
+  Favorite as FavoriteIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -28,6 +37,7 @@ const Header: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -40,7 +50,17 @@ const Header: React.FC = () => {
   const handleLogout = () => {
     logout();
     handleClose();
+    setMobileMenuOpen(false);
     navigate('/');
+  };
+
+  const handleMobileMenuClose = () => {
+    setMobileMenuOpen(false);
+  };
+
+  const handleMobileNavigation = (path: string) => {
+    navigate(path);
+    setMobileMenuOpen(false);
   };
 
   return (
@@ -73,11 +93,11 @@ const Header: React.FC = () => {
           />
         </Box>
 
-                <Box sx={{ 
-          display: 'flex', 
+                {/* Desktop Navigation */}
+        <Box sx={{ 
+          display: { xs: 'none', sm: 'flex' }, 
           alignItems: 'center', 
-          gap: { xs: 1, sm: 2 },
-          flexWrap: { xs: 'wrap', sm: 'nowrap' }
+          gap: 2
         }}>
           <Button
             color="inherit"
@@ -86,13 +106,11 @@ const Header: React.FC = () => {
             sx={{ 
               color: 'white', 
               fontWeight: 600,
-              fontSize: { xs: '0.75rem', sm: '0.875rem' },
-              px: { xs: 1, sm: 2 },
-              minWidth: { xs: 'auto', sm: 'auto' }
+              fontSize: '0.875rem',
+              px: 2
             }}
           >
-            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Home</Box>
-            <Box sx={{ display: { xs: 'block', sm: 'none' } }}>H</Box>
+            Home
           </Button>
 
           <Button
@@ -103,16 +121,32 @@ const Header: React.FC = () => {
               color: 'white', 
               fontWeight: 600,
               background: 'rgba(255, 255, 255, 0.1)',
-              fontSize: { xs: '0.75rem', sm: '0.875rem' },
-              px: { xs: 1, sm: 2 },
-              minWidth: { xs: 'auto', sm: 'auto' },
+              fontSize: '0.875rem',
+              px: 2,
               '&:hover': {
                 background: 'rgba(255, 255, 255, 0.2)',
               },
             }}
           >
-            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Amora Compara</Box>
-            <Box sx={{ display: { xs: 'block', sm: 'none' } }}>Compara</Box>
+            Amora Compara
+          </Button>
+
+          <Button
+            color="inherit"
+            startIcon={<FavoriteIcon />}
+            onClick={() => navigate('/match')}
+            sx={{ 
+              color: 'white', 
+              fontWeight: 600,
+              background: 'rgba(255, 255, 255, 0.1)',
+              fontSize: '0.875rem',
+              px: 2,
+              '&:hover': {
+                background: 'rgba(255, 255, 255, 0.2)',
+              },
+            }}
+          >
+            aMORA Match
           </Button>
 
           {user && (
@@ -124,13 +158,11 @@ const Header: React.FC = () => {
                 sx={{ 
                   color: 'white', 
                   fontWeight: 600,
-                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                  px: { xs: 1, sm: 2 },
-                  minWidth: { xs: 'auto', sm: 'auto' }
+                  fontSize: '0.875rem',
+                  px: 2
                 }}
               >
-                <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Adicionar Imóvel</Box>
-                <Box sx={{ display: { xs: 'block', sm: 'none' } }}>Adicionar</Box>
+                Adicionar Imóvel
               </Button>
 
               <Button
@@ -140,13 +172,11 @@ const Header: React.FC = () => {
                 sx={{ 
                   color: 'white', 
                   fontWeight: 600,
-                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                  px: { xs: 1, sm: 2 },
-                  minWidth: { xs: 'auto', sm: 'auto' }
+                  fontSize: '0.875rem',
+                  px: 2
                 }}
               >
-                <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Grupos</Box>
-                <Box sx={{ display: { xs: 'block', sm: 'none' } }}>Grupos</Box>
+                Grupos
               </Button>
 
               {user.userType === 'realtor' && (
@@ -157,13 +187,11 @@ const Header: React.FC = () => {
                   sx={{ 
                     color: 'white', 
                     fontWeight: 600,
-                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    px: { xs: 1, sm: 2 },
-                    minWidth: { xs: 'auto', sm: 'auto' }
+                    fontSize: '0.875rem',
+                    px: 2
                   }}
                 >
-                  <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Dashboard</Box>
-                  <Box sx={{ display: { xs: 'block', sm: 'none' } }}>Dash</Box>
+                  Dashboard
                 </Button>
               )}
 
@@ -216,17 +244,215 @@ const Header: React.FC = () => {
               sx={{ 
                 color: 'white', 
                 fontWeight: 600,
-                fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                px: { xs: 1, sm: 2 },
-                minWidth: { xs: 'auto', sm: 'auto' }
+                fontSize: '0.875rem',
+                px: 2
               }}
             >
-              <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Entrar</Box>
-              <Box sx={{ display: { xs: 'block', sm: 'none' } }}>Login</Box>
+              Entrar
             </Button>
           )}
         </Box>
+
+        {/* Mobile Menu Button */}
+        <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+          <IconButton
+            color="inherit"
+            onClick={() => setMobileMenuOpen(true)}
+            sx={{ color: 'white' }}
+          >
+            <MenuIcon />
+          </IconButton>
+        </Box>
       </Toolbar>
+
+      {/* Mobile Navigation Drawer */}
+      <Drawer
+        anchor="right"
+        open={mobileMenuOpen}
+        onClose={handleMobileMenuClose}
+        PaperProps={{
+          sx: { 
+            width: 280,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+            color: 'white'
+          },
+        }}
+      >
+        <Box sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box
+              component="img"
+              src="/static/img/logo.png"
+              alt="aMORA"
+              sx={{
+                height: '32px',
+                filter: 'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))'
+              }}
+            />
+            <IconButton
+              onClick={handleMobileMenuClose}
+              sx={{ color: 'white' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          <List sx={{ pt: 0 }}>
+            <ListItem 
+              button 
+              onClick={() => handleMobileNavigation('/')}
+              sx={{ 
+                borderRadius: 1, 
+                mb: 1,
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
+              }}
+            >
+              <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                <HomeIcon />
+              </ListItemIcon>
+              <ListItemText primary="Home" />
+            </ListItem>
+
+                         <ListItem 
+               button 
+               onClick={() => handleMobileNavigation('/compare')}
+               sx={{ 
+                 borderRadius: 1, 
+                 mb: 1,
+                 backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                 '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.2)' }
+               }}
+             >
+               <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                 <CompareIcon />
+               </ListItemIcon>
+               <ListItemText primary="Amora Compara" />
+             </ListItem>
+
+             <ListItem 
+               button 
+               onClick={() => handleMobileNavigation('/match')}
+               sx={{ 
+                 borderRadius: 1, 
+                 mb: 1,
+                 backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                 '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.2)' }
+               }}
+             >
+               <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                 <FavoriteIcon />
+               </ListItemIcon>
+               <ListItemText primary="aMORA Match" />
+             </ListItem>
+
+            {user && (
+              <>
+                <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.3)' }} />
+                
+                <ListItem 
+                  button 
+                  onClick={() => handleMobileNavigation('/add-apartment')}
+                  sx={{ 
+                    borderRadius: 1, 
+                    mb: 1,
+                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Adicionar Imóvel" />
+                </ListItem>
+
+                <ListItem 
+                  button 
+                  onClick={() => handleMobileNavigation('/groups')}
+                  sx={{ 
+                    borderRadius: 1, 
+                    mb: 1,
+                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                    <GroupIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Grupos" />
+                </ListItem>
+
+                {user.userType === 'realtor' && (
+                  <ListItem 
+                    button 
+                    onClick={() => handleMobileNavigation('/dashboard')}
+                    sx={{ 
+                      borderRadius: 1, 
+                      mb: 1,
+                      '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
+                    }}
+                  >
+                    <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                      <DashboardIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Dashboard" />
+                  </ListItem>
+                )}
+
+                <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.3)' }} />
+
+                <ListItem 
+                  button 
+                  onClick={() => handleMobileNavigation('/profile')}
+                  sx={{ 
+                    borderRadius: 1, 
+                    mb: 1,
+                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                    <PersonIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Perfil" />
+                </ListItem>
+
+                <ListItem 
+                  button 
+                  onClick={handleLogout}
+                  sx={{ 
+                    borderRadius: 1, 
+                    mb: 1,
+                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                    <LogoutIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Sair" />
+                </ListItem>
+              </>
+            )}
+
+            {!user && (
+              <>
+                <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.3)' }} />
+                
+                <ListItem 
+                  button 
+                  onClick={() => handleMobileNavigation('/login')}
+                  sx={{ 
+                    borderRadius: 1, 
+                    mb: 1,
+                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                    <AccountCircleIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Entrar" />
+                </ListItem>
+              </>
+            )}
+          </List>
+        </Box>
+      </Drawer>
     </AppBar>
   );
 };
