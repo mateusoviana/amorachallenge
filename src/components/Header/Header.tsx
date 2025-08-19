@@ -18,6 +18,7 @@ import {
   Logout as LogoutIcon,
   Dashboard as DashboardIcon,
   Group as GroupIcon,
+  Compare as CompareIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -61,24 +62,57 @@ const Header: React.FC = () => {
           }}
           onClick={() => navigate('/')}
         >
-          <img
+          <Box
+            component="img"
             src="/static/img/logo.png"
             alt="aMORA"
-            style={{
-              height: '40px',
+            sx={{
+              height: { xs: '32px', sm: '40px' },
               filter: 'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))'
             }}
           />
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: { xs: 1, sm: 2 },
+          flexWrap: { xs: 'wrap', sm: 'nowrap' }
+        }}>
           <Button
             color="inherit"
             startIcon={<HomeIcon />}
             onClick={() => navigate('/')}
-            sx={{ color: 'white', fontWeight: 600 }}
+            sx={{ 
+              color: 'white', 
+              fontWeight: 600,
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              px: { xs: 1, sm: 2 },
+              minWidth: { xs: 'auto', sm: 'auto' }
+            }}
           >
-            Home
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Home</Box>
+            <Box sx={{ display: { xs: 'block', sm: 'none' } }}>H</Box>
+          </Button>
+
+          <Button
+            color="inherit"
+            startIcon={<CompareIcon />}
+            onClick={() => navigate('/compare')}
+            sx={{ 
+              color: 'white', 
+              fontWeight: 600,
+              background: 'rgba(255, 255, 255, 0.1)',
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              px: { xs: 1, sm: 2 },
+              minWidth: { xs: 'auto', sm: 'auto' },
+              '&:hover': {
+                background: 'rgba(255, 255, 255, 0.2)',
+              },
+            }}
+          >
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Amora Compara</Box>
+            <Box sx={{ display: { xs: 'block', sm: 'none' } }}>Compara</Box>
           </Button>
 
           {user && (
@@ -87,18 +121,32 @@ const Header: React.FC = () => {
                 color="inherit"
                 startIcon={<AddIcon />}
                 onClick={() => navigate('/add-apartment')}
-                sx={{ color: 'white', fontWeight: 600 }}
+                sx={{ 
+                  color: 'white', 
+                  fontWeight: 600,
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  px: { xs: 1, sm: 2 },
+                  minWidth: { xs: 'auto', sm: 'auto' }
+                }}
               >
-                Adicionar Imóvel
+                <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Adicionar Imóvel</Box>
+                <Box sx={{ display: { xs: 'block', sm: 'none' } }}>Adicionar</Box>
               </Button>
 
               <Button
                 color="inherit"
                 startIcon={<GroupIcon />}
                 onClick={() => navigate('/groups')}
-                sx={{ color: 'white', fontWeight: 600 }}
+                sx={{ 
+                  color: 'white', 
+                  fontWeight: 600,
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  px: { xs: 1, sm: 2 },
+                  minWidth: { xs: 'auto', sm: 'auto' }
+                }}
               >
-                Grupos
+                <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Grupos</Box>
+                <Box sx={{ display: { xs: 'block', sm: 'none' } }}>Grupos</Box>
               </Button>
 
               {user.userType === 'realtor' && (
@@ -106,9 +154,16 @@ const Header: React.FC = () => {
                   color="inherit"
                   startIcon={<DashboardIcon />}
                   onClick={() => navigate('/dashboard')}
-                  sx={{ color: 'white', fontWeight: 600 }}
+                  sx={{ 
+                    color: 'white', 
+                    fontWeight: 600,
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    px: { xs: 1, sm: 2 },
+                    minWidth: { xs: 'auto', sm: 'auto' }
+                  }}
                 >
-                  Dashboard
+                  <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Dashboard</Box>
+                  <Box sx={{ display: { xs: 'block', sm: 'none' } }}>Dash</Box>
                 </Button>
               )}
 
@@ -158,9 +213,16 @@ const Header: React.FC = () => {
               color="inherit"
               startIcon={<AccountCircleIcon />}
               onClick={() => navigate('/login')}
-              sx={{ color: 'white', fontWeight: 600 }}
+              sx={{ 
+                color: 'white', 
+                fontWeight: 600,
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                px: { xs: 1, sm: 2 },
+                minWidth: { xs: 'auto', sm: 'auto' }
+              }}
             >
-              Entrar
+              <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Entrar</Box>
+              <Box sx={{ display: { xs: 'block', sm: 'none' } }}>Login</Box>
             </Button>
           )}
         </Box>

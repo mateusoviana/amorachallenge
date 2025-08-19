@@ -37,6 +37,10 @@ interface ApartmentCardProps {
   canRemoveFromGroup?: boolean;
   groupId?: string;
   showReactions?: boolean;
+  // Quando verdadeiro, o card não navega para a página de detalhes ao ser clicado
+  // e permite injetar um manipulador de clique externo
+  disableNavigation?: boolean;
+  onCardClick?: (e: React.MouseEvent) => void;
 }
 
 const ApartmentCard: React.FC<ApartmentCardProps> = ({ 
@@ -45,7 +49,9 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   onRemoveFromGroup, 
   canRemoveFromGroup = false,
   groupId,
-  showReactions = false
+  showReactions = false,
+  disableNavigation = false,
+  onCardClick,
 }) => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -103,7 +109,16 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
         },
       }}
-      onClick={handleCardClick}
+      onClick={(e) => {
+        if (disableNavigation) {
+          // Permite que a página pai trate o clique para seleção
+          if (onCardClick) onCardClick(e);
+          // Evita qualquer propagação inesperada
+          e.stopPropagation();
+        } else {
+          handleCardClick();
+        }
+      }}
     >
       <Box sx={{ position: 'relative' }}>
         <CardMedia

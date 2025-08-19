@@ -8,6 +8,7 @@ import {
   useTheme,
   CircularProgress,
   Alert,
+
 } from '@mui/material';
 import ApartmentCard from '../../components/ApartmentCard/ApartmentCard';
 import Filters from '../../components/Filters/Filters';
@@ -228,18 +229,18 @@ const Home: React.FC = () => {
         >
           Encontre seu Imóvel Ideal
         </Typography>
-        <Typography
+                <Typography
           variant="h6"
           color="text.secondary"
-          sx={{ 
-            textAlign: 'center', 
-            maxWidth: 600, 
+          sx={{
+            textAlign: 'center',
+            maxWidth: 600,
             mx: 'auto',
             position: 'relative',
             zIndex: 1,
           }}
         >
-          Explore milhares de apartamentos e casas disponíveis para compra. 
+          Explore milhares de apartamentos e casas disponíveis para compra.
           Compare opções e encontre o lugar perfeito para você.
         </Typography>
       </Box>

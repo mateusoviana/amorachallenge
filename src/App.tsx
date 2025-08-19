@@ -13,6 +13,7 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import Groups from './pages/Groups/Groups';
 import GroupDetail from './pages/GroupDetail/GroupDetail';
 import Login from './pages/Login/Login';
+import { Compare, CompareSelect, CompareResult } from './pages/Compare';
 
 const App: React.FC = () => {
   return (
@@ -22,7 +23,7 @@ const App: React.FC = () => {
         <Router>
           <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <Header />
-            <Box component="main" sx={{ flexGrow: 1, pt: 8 }}>
+            <Box component="main" sx={{ flexGrow: 1, pt: { xs: 7, sm: 8 } }}>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/apartment/:id" element={<ApartmentDetail />} />
@@ -32,6 +33,9 @@ const App: React.FC = () => {
                 <Route path="/groups" element={<Groups />} />
                 <Route path="/group/:groupId" element={<GroupDetail />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/compare" element={<Compare />} />
+                <Route path="/compare/select" element={<CompareSelect />} />
+                <Route path="/compare/result" element={<CompareResult />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Box>
