@@ -51,6 +51,8 @@ const CompareResult: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [entryValues, setEntryValues] = useState<number[]>([]);
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [recalculateTrigger, setRecalculateTrigger] = useState(0);
+  const [tableData, setTableData] = useState<ComparisonRow[]>([]);
 
   useEffect(() => {
     loadApartments();
@@ -58,9 +60,26 @@ const CompareResult: React.FC = () => {
 
   useEffect(() => {
     if (apartments.length > 0) {
-      setEntryValues(new Array(apartments.length).fill(50000));
+      const initialEntryValues = new Array(apartments.length).fill(50000);
+      setEntryValues(initialEntryValues);
     }
   }, [apartments]);
+
+  // Atualizar tabela quando apartments ou entryValues mudarem
+  useEffect(() => {
+    if (apartments.length > 0 && entryValues.length > 0) {
+      const newTableData = generateComparisonData();
+      setTableData(newTableData);
+    }
+  }, [apartments, entryValues]);
+
+  // Força recálculo quando o botão de recalcular for clicado
+  useEffect(() => {
+    if (recalculateTrigger > 0 && apartments.length > 0 && entryValues.length > 0) {
+      const newTableData = generateComparisonData();
+      setTableData(newTableData);
+    }
+  }, [recalculateTrigger]);
 
   const loadApartments = async () => {
     try {
@@ -70,7 +89,7 @@ const CompareResult: React.FC = () => {
       );
       setApartments(apartmentsData.filter((apt): apt is Apartment => apt !== null));
     } catch (err) {
-              setError('Erro ao carregar dados dos imoveis');
+              setError('Erro ao carregar dados dos imóveis');
       console.error(err);
     } finally {
       setLoading(false);
@@ -102,26 +121,29 @@ const CompareResult: React.FC = () => {
   };
 
   const generateComparisonData = (): ComparisonRow[] => {
-    if (apartments.length === 0) return [];
+    if (apartments.length === 0 || entryValues.length === 0) return [];
+
+    // Garantir que temos valores válidos
+    const currentEntryValues = entryValues.length > 0 ? entryValues : new Array(apartments.length).fill(50000);
 
     return [
       {
-        label: 'Titulo',
+        label: 'Título',
         values: apartments.map(apt => apt.title),
         highlight: true,
       },
       {
-        label: 'Preco',
+        label: 'Preço',
         values: apartments.map(apt => formatCurrency(apt.price)),
         highlight: true,
       },
       {
-        label: 'Localizacao',
+        label: 'Localização',
         values: apartments.map(apt => `${apt.neighborhood}, ${apt.city}`),
       },
       {
-        label: 'Area (m2)',
-        values: apartments.map(apt => `${apt.area}m2`),
+        label: 'Área (m²)',
+        values: apartments.map(apt => `${apt.area}m²`),
       },
       {
         label: 'Quartos',
@@ -136,19 +158,19 @@ const CompareResult: React.FC = () => {
         values: apartments.map(apt => apt.parkingSpaces),
       },
       {
-        label: 'Condominio',
-        values: apartments.map(apt => apt.condominiumFee > 0 ? formatCurrency(apt.condominiumFee) : 'Nao informado'),
+        label: 'Condomínio',
+        values: apartments.map(apt => apt.condominiumFee > 0 ? formatCurrency(apt.condominiumFee) : 'Não informado'),
       },
       {
         label: 'IPTU',
-        values: apartments.map(apt => apt.iptu > 0 ? formatCurrency(apt.iptu) : 'Nao informado'),
+        values: apartments.map(apt => apt.iptu > 0 ? formatCurrency(apt.iptu) : 'Não informado'),
       },
       {
         label: 'Visibilidade',
-        values: apartments.map(apt => apt.isPublic ? 'Publico' : 'Privado'),
+        values: apartments.map(apt => apt.isPublic ? 'Público' : 'Privado'),
       },
       {
-        label: 'Data de Criacao',
+        label: 'Data de Criação',
         values: apartments.map(apt => new Date(apt.createdAt).toLocaleDateString('pt-BR')),
       },
       // Seção de Financiamento
@@ -159,16 +181,16 @@ const CompareResult: React.FC = () => {
       },
       {
         label: 'Entrada Inicial',
-        values: entryValues.map(value => formatCurrency(value)),
+        values: currentEntryValues.map(value => formatCurrency(value)),
       },
       {
-        label: 'Entrada Total Necessaria (20%)',
+        label: 'Entrada Total Necessária (20%)',
         values: apartments.map(apt => formatCurrency(apt.price * 0.2)),
       },
       {
         label: 'Entrada Restante',
         values: apartments.map((apt, index) => {
-          const remaining = (apt.price * 0.2) - entryValues[index];
+          const remaining = (apt.price * 0.2) - currentEntryValues[index];
           return remaining > 0 ? formatCurrency(remaining) : 'Entrada completa';
         }),
       },
@@ -179,7 +201,7 @@ const CompareResult: React.FC = () => {
       {
         label: 'Parcela de Entrada (36x)',
         values: apartments.map((apt, index) => {
-          const remaining = (apt.price * 0.2) - entryValues[index];
+          const remaining = (apt.price * 0.2) - currentEntryValues[index];
           if (remaining <= 0) return 'R$ 0,00';
           return formatCurrency((remaining * 1.1) / 36);
         }),
@@ -187,7 +209,7 @@ const CompareResult: React.FC = () => {
       {
         label: 'MENSALIDADE TOTAL',
         values: apartments.map((apt, index) => {
-          const financing = calculateFinancing(apt.price, entryValues[index]);
+          const financing = calculateFinancing(apt.price, currentEntryValues[index]);
           return financing ? formatCurrency(financing.total) : 'Entrada insuficiente';
         }),
         highlight: true,
@@ -200,6 +222,12 @@ const CompareResult: React.FC = () => {
     const newEntryValues = [...entryValues];
     newEntryValues[index] = numValue;
     setEntryValues(newEntryValues);
+    // Força o recálculo automático
+    setRecalculateTrigger(prev => prev + 1);
+  };
+
+  const handleRecalculate = () => {
+    setRecalculateTrigger(prev => prev + 1);
   };
 
   const handleBack = () => {
@@ -227,7 +255,7 @@ const CompareResult: React.FC = () => {
       // Título principal
       doc.setFontSize(20);
       doc.setTextColor(0, 0, 0);
-      doc.text('Comparacao de Imoveis - aMORA', margin, 30);
+      doc.text('Comparação de Imóveis - aMORA', margin, 30);
       
       // Data da comparação
       doc.setFontSize(12);
@@ -245,7 +273,7 @@ const CompareResult: React.FC = () => {
         
         doc.setFontSize(14);
         doc.setTextColor(0, 0, 0);
-        doc.text(`Imovel ${index + 1}: ${apartment.title}`, margin, yPosition);
+        doc.text(`Imóvel ${index + 1}: ${apartment.title}`, margin, yPosition);
         
         yPosition += 10;
         doc.setFontSize(10);
@@ -254,10 +282,10 @@ const CompareResult: React.FC = () => {
         
         yPosition += 8;
         doc.setTextColor(0, 0, 0);
-        doc.text(`Preco: ${formatCurrency(apartment.price)}`, margin, yPosition);
+        doc.text(`Preço: ${formatCurrency(apartment.price)}`, margin, yPosition);
         
         yPosition += 8;
-        doc.text(`Area: ${apartment.area}m2 | Quartos: ${apartment.bedrooms} | Banheiros: ${apartment.bathrooms}`, margin, yPosition);
+        doc.text(`Área: ${apartment.area}m2 | Quartos: ${apartment.bedrooms} | Banheiros: ${apartment.bathrooms}`, margin, yPosition);
         
         yPosition += 15;
       });
@@ -274,18 +302,18 @@ const CompareResult: React.FC = () => {
       yPosition += 20;
       
       // Preparar dados da tabela
-      const tableData = comparisonData.map(row => [
+      const pdfTableData = tableData.map(row => [
         row.label,
         ...row.values.map(value => String(value))
       ]);
       
       // Cabeçalho da tabela
-      const headers = ['Caracteristica', ...apartments.map((_, index) => `Imovel ${index + 1}`)];
+      const headers = ['Característica', ...apartments.map((_, index) => `Imóvel ${index + 1}`)];
       
       // Configurações da tabela
       autoTable(doc, {
         head: [headers],
-        body: tableData,
+        body: pdfTableData,
         startY: yPosition,
         margin: { left: margin, right: margin },
         styles: {
@@ -306,8 +334,8 @@ const CompareResult: React.FC = () => {
         didParseCell: function(data) {
           // Destacar linhas importantes
           if (data.row.index === 0 || data.row.index === 1 || 
-              data.row.index === comparisonData.length - 1 || 
-              data.row.index === comparisonData.length - 2) {
+              data.row.index === pdfTableData.length - 1 || 
+              data.row.index === pdfTableData.length - 2) {
             data.cell.styles.fillColor = [255, 235, 59]; // Amarelo para destaque
             data.cell.styles.textColor = [0, 0, 0];
           }
@@ -332,7 +360,7 @@ const CompareResult: React.FC = () => {
         const financing = calculateFinancing(apartment.price, entryValues[index]);
         if (financing) {
           doc.setFontSize(10);
-          doc.text(`Imovel ${index + 1}: ${formatCurrency(financing.total)}/mes`, margin, yPosition);
+          doc.text(`Imóvel ${index + 1}: ${formatCurrency(financing.total)}/mês`, margin, yPosition);
           yPosition += 8;
         }
       });
@@ -343,8 +371,8 @@ const CompareResult: React.FC = () => {
         doc.setPage(i);
         doc.setFontSize(8);
         doc.setTextColor(100, 100, 100);
-        doc.text(`Pagina ${i} de ${pageCount}`, pageWidth - margin - 30, doc.internal.pageSize.getHeight() - 10);
-        doc.text('aMORA - Sistema de Gestao Imobiliaria', margin, doc.internal.pageSize.getHeight() - 10);
+        doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin - 30, doc.internal.pageSize.getHeight() - 10);
+        doc.text('aMORA - Sistema de Gestão Imobiliária', margin, doc.internal.pageSize.getHeight() - 10);
       }
       
       // Salvar o PDF
@@ -377,7 +405,7 @@ const CompareResult: React.FC = () => {
     );
   }
 
-  const comparisonData = generateComparisonData();
+  // Usar tableData em vez de gerar novamente
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -400,7 +428,7 @@ const CompareResult: React.FC = () => {
             mb: 2,
           }}
         >
-          Comparacao de Imoveis
+          Comparação de Imóveis
         </Typography>
         
         <Typography
@@ -408,7 +436,7 @@ const CompareResult: React.FC = () => {
           color="text.secondary"
           sx={{ mb: 3 }}
         >
-                      Compare caracteristicas, precos e financiamento dos imoveis selecionados
+          Compare características, preços e financiamento dos imóveis selecionados
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
@@ -416,7 +444,7 @@ const CompareResult: React.FC = () => {
             variant="outlined"
             onClick={handleNewComparison}
           >
-            Nova Comparacao
+            Nova Comparação
           </Button>
           <Button
             variant="outlined"
@@ -429,7 +457,7 @@ const CompareResult: React.FC = () => {
         </Box>
       </Box>
 
-                  {/* Configuracao de Entrada */}
+      {/* Configuração de Entrada */}
       <Card sx={{ mb: 4 }}>
         <CardContent>
           <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -451,11 +479,33 @@ const CompareResult: React.FC = () => {
                   InputProps={{
                     startAdornment: <Typography variant="caption">R$</Typography>,
                   }}
-                  helperText={`20% necessario: ${formatCurrency(apartment.price * 0.2)}`}
+                  helperText={`20% necessário: ${formatCurrency(apartment.price * 0.2)}`}
                 />
               </Grid>
             ))}
           </Grid>
+          <Box sx={{ mt: 3, textAlign: 'center' }}>
+            <Button
+              variant="contained"
+              startIcon={<CalculateIcon />}
+              onClick={handleRecalculate}
+              sx={{
+                background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.primary.main} 100%)`,
+                color: 'white',
+                fontWeight: 600,
+                px: 3,
+                py: 1,
+                '&:hover': {
+                  background: `linear-gradient(135deg, ${theme.palette.secondary.dark} 0%, ${theme.palette.primary.dark} 100%)`,
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                },
+                transition: 'all 0.3s ease',
+              }}
+            >
+              Recalcular Mensalidades
+            </Button>
+          </Box>
         </CardContent>
       </Card>
 
@@ -465,24 +515,24 @@ const CompareResult: React.FC = () => {
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 600, bgcolor: theme.palette.grey[50] }}>
-                Caracteristica
+                Característica
               </TableCell>
               {apartments.map((apartment, index) => (
-                <TableCell 
-                  key={apartment.id}
-                  sx={{ 
-                    fontWeight: 600, 
-                    bgcolor: theme.palette.grey[50],
-                    textAlign: 'center',
-                  }}
-                >
-                  Imovel {index + 1}
-                </TableCell>
+                                  <TableCell 
+                    key={apartment.id}
+                    sx={{ 
+                      fontWeight: 600, 
+                      bgcolor: theme.palette.grey[50],
+                      textAlign: 'center',
+                    }}
+                  >
+                    Imóvel {index + 1}
+                  </TableCell>
               ))}
             </TableRow>
           </TableHead>
           <TableBody>
-            {comparisonData.map((row, rowIndex) => (
+            {tableData.map((row, rowIndex) => (
               <TableRow 
                 key={rowIndex}
                 sx={{
@@ -519,7 +569,7 @@ const CompareResult: React.FC = () => {
       <Card>
         <CardContent>
           <Typography variant="h6" sx={{ mb: 2 }}>
-            Resumo da Comparacao
+            Resumo da Comparação
           </Typography>
           <Grid container spacing={2}>
             {apartments.map((apartment, index) => {
