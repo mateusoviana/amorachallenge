@@ -38,6 +38,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { useGroups } from '../../hooks/useGroups';
 import { useUserApartments } from '../../hooks/useUserApartments';
+import { GroupNotificationService } from '../../services/groupNotificationService';
 import { Apartment, Group } from '../../types';
 import { scrapingService } from '../../services/scrapingService';
 import { ImageUpload } from '../../components/ImageUpload';
@@ -108,6 +109,7 @@ const AddApartment: React.FC = () => {
     isPublic: false,
     selectedGroups: [] as string[],
     images: [] as string[],
+    notifyGroups: true,
   });
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -192,7 +194,17 @@ const AddApartment: React.FC = () => {
 
       };
 
-      await addApartment(newApartment);
+      const createdApartment = await addApartment(newApartment);
+      
+      // Notificar grupos se solicitado
+      if (formData.notifyGroups && formData.selectedGroups.length > 0 && user) {
+        for (const groupId of formData.selectedGroups) {
+          const group = userGroups.find(g => g.id === groupId);
+          if (group) {
+            await GroupNotificationService.notifyGroupMembers(createdApartment, group, user.id);
+          }
+        }
+      }
       
       setSuccess('Apartamento cadastrado com sucesso!');
       
@@ -214,6 +226,7 @@ const AddApartment: React.FC = () => {
         isPublic: false,
         selectedGroups: [],
         images: [],
+        notifyGroups: true,
       });
 
     } catch (err) {
@@ -242,6 +255,7 @@ const AddApartment: React.FC = () => {
       isPublic: apartment.isPublic,
       selectedGroups: apartment.groups.map(g => g.id),
       images: apartment.images,
+      notifyGroups: true,
     });
     setActiveTab(0);
   };
@@ -293,6 +307,7 @@ const AddApartment: React.FC = () => {
         isPublic: false,
         selectedGroups: [],
         images: [],
+        notifyGroups: true,
       });
 
     } catch (err) {
@@ -354,6 +369,7 @@ const AddApartment: React.FC = () => {
         isPublic: false,
         selectedGroups: [],
         images: scrapedData.images,
+        notifyGroups: true,
       });
 
       setImportUrl('');
@@ -670,6 +686,26 @@ const AddApartment: React.FC = () => {
                 />
               </Grid>
 
+              {formData.selectedGroups.length > 0 && (
+                <Grid item xs={12}>
+                  <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={formData.notifyGroups}
+                          onChange={(e) => handleInputChange('notifyGroups', e.target.checked)}
+                          color="primary"
+                        />
+                      }
+                      label="Notificar membros dos grupos selecionados por email"
+                    />
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                      Os membros dos grupos selecionados receberão um email informando sobre o novo imóvel.
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
+
               {/* Botões de Ação */}
               <Grid item xs={12}>
                 <Divider sx={{ my: 3 }} />
@@ -696,6 +732,7 @@ const AddApartment: React.FC = () => {
                           isPublic: false,
                           selectedGroups: [],
                           images: [],
+                          notifyGroups: true,
                         });
                       }}
                       size="large"

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { Apartment } from '../types';
 import { supabase } from '../lib/supabase';
+import { apartmentService } from '../services/apartmentService';
 
 export const useUserApartments = () => {
   const { user } = useAuth();
@@ -178,42 +179,13 @@ export const useUserApartments = () => {
         throw new Error('Usuário não encontrado');
       }
       
-
-      
-      const { data, error } = await supabase
-        .from('apartments')
-        .insert({
-          title: apartment.title,
-          description: apartment.description,
-          price: apartment.price,
-          condominium_fee: apartment.condominiumFee,
-          iptu: apartment.iptu,
-          address: apartment.address,
-          neighborhood: apartment.neighborhood,
-          city: apartment.city,
-          state: apartment.state,
-          bedrooms: apartment.bedrooms,
-          bathrooms: apartment.bathrooms,
-          parking_spaces: apartment.parkingSpaces,
-          area: apartment.area,
-          is_public: apartment.isPublic,
-          owner_id: apartment.ownerId,
-          images: apartment.images,
-        })
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Erro ao criar apartamento:', error);
-        throw error;
-      }
-      
-
+      // Usar apartmentService que dispara os alertas automaticamente
+      const newApartment = await apartmentService.createApartment(apartment);
       
       // Associar apartamento aos grupos selecionados
       if (apartment.groups && apartment.groups.length > 0) {
         const groupAssociations = apartment.groups.map(group => ({
-          apartment_id: data.id,
+          apartment_id: newApartment.id,
           group_id: group.id
         }));
         
@@ -228,7 +200,7 @@ export const useUserApartments = () => {
       }
       
       await fetchUserApartments();
-      return data;
+      return newApartment;
     } catch (err) {
       console.error('Erro completo:', err);
       setError('Erro ao adicionar apartamento: ' + (err as Error).message);

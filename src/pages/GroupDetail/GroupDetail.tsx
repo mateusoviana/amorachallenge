@@ -26,6 +26,7 @@ import {
   ListItemAvatar,
   Checkbox,
   ListItemSecondaryAction,
+  FormControlLabel,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -44,6 +45,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { groupService } from '../../services/groupService';
 import { apartmentService } from '../../services/apartmentService';
+import { GroupNotificationService } from '../../services/groupNotificationService';
 import { Group, GroupMember, Apartment } from '../../types';
 import ApartmentCard from '../../components/ApartmentCard/ApartmentCard';
 
@@ -69,6 +71,7 @@ const GroupDetail: React.FC = () => {
   const [userApartments, setUserApartments] = useState<Apartment[]>([]);
   const [selectedApartments, setSelectedApartments] = useState<string[]>([]);
   const [addApartmentLoading, setAddApartmentLoading] = useState(false);
+  const [notifyMembers, setNotifyMembers] = useState(true);
   
   const [editGroupDialog, setEditGroupDialog] = useState(false);
   const [editGroupData, setEditGroupData] = useState({ name: '', description: '' });
@@ -191,7 +194,7 @@ const GroupDetail: React.FC = () => {
   };
 
   const handleAddApartments = async () => {
-    if (!groupId || selectedApartments.length === 0) return;
+    if (!groupId || selectedApartments.length === 0 || !user?.id || !group) return;
     
     try {
       setAddApartmentLoading(true);
@@ -200,11 +203,20 @@ const GroupDetail: React.FC = () => {
       // Adicionar cada apartamento selecionado ao grupo
       for (const apartmentId of selectedApartments) {
         await groupService.addApartmentToGroup(apartmentId, groupId);
+        
+        // Notificar membros se solicitado
+        if (notifyMembers) {
+          const apartment = userApartments.find(apt => apt.id === apartmentId);
+          if (apartment) {
+            await GroupNotificationService.notifyGroupMembers(apartment, group, user.id);
+          }
+        }
       }
       
       setSuccess(`${selectedApartments.length} imóve${selectedApartments.length !== 1 ? 'is' : 'l'} adicionado${selectedApartments.length !== 1 ? 's' : ''} ao grupo com sucesso!`);
       setAddApartmentDialog(false);
       setSelectedApartments([]);
+      setNotifyMembers(true);
       await loadGroupData();
       
     } catch (err) {
@@ -647,6 +659,22 @@ const GroupDetail: React.FC = () => {
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 Selecione os imóveis que deseja adicionar ao grupo (inclui seus imóveis e imóveis dos seus grupos):
               </Typography>
+              
+              <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={notifyMembers}
+                      onChange={(e) => setNotifyMembers(e.target.checked)}
+                      color="primary"
+                    />
+                  }
+                  label="Notificar membros do grupo por email sobre os novos imóveis"
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                  Os membros receberão um email informando sobre os imóveis adicionados ao grupo.
+                </Typography>
+              </Box>
               <List sx={{ maxHeight: 400, overflow: 'auto' }}>
                 {userApartments.map((apartment) => (
                   <ListItem key={apartment.id} divider>

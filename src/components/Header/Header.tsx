@@ -28,6 +28,7 @@ import {
   Menu as MenuIcon,
   Close as CloseIcon,
   Favorite as FavoriteIcon,
+  NotificationsActive as NotificationsIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -148,6 +149,26 @@ const Header: React.FC = () => {
           >
             aMORA Match
           </Button>
+
+          {user && (
+            <Button
+              color="inherit"
+              startIcon={<NotificationsIcon />}
+              onClick={() => navigate('/alerts')}
+              sx={{ 
+                color: 'white', 
+                fontWeight: 600,
+                background: 'rgba(255, 255, 255, 0.1)',
+                fontSize: '0.875rem',
+                px: 2,
+                '&:hover': {
+                  background: 'rgba(255, 255, 255, 0.2)',
+                },
+              }}
+            >
+              aMORA Avisa
+            </Button>
+          )}
 
           {user && (
             <>
@@ -344,6 +365,24 @@ const Header: React.FC = () => {
                </ListItemIcon>
                <ListItemText primary="aMORA Match" />
              </ListItem>
+
+            {user && (
+              <ListItem 
+                button 
+                onClick={() => handleMobileNavigation('/alerts')}
+                sx={{ 
+                  borderRadius: 1, 
+                  mb: 1,
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.2)' }
+                }}
+              >
+                <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                  <NotificationsIcon />
+                </ListItemIcon>
+                <ListItemText primary="aMORA Avisa" />
+              </ListItem>
+            )}
 
             {user && (
               <>

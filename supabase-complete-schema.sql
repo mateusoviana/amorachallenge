@@ -137,6 +137,53 @@ ON apartment_comments(user_id);
 ALTER TABLE apartment_comments DISABLE ROW LEVEL SECURITY;
 
 -- ================================
+-- Tabela de critérios de alerta
+-- ================================
+CREATE TABLE IF NOT EXISTS alert_criteria (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    price_min DECIMAL(12,2),
+    price_max DECIMAL(12,2),
+    area_min DECIMAL(8,2),
+    area_max DECIMAL(8,2),
+    bedrooms INTEGER[],
+    bathrooms INTEGER[],
+    parking_spaces INTEGER[],
+    cities TEXT[],
+    neighborhoods TEXT[],
+    email_notifications BOOLEAN DEFAULT true,
+    whatsapp_notifications BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ================================
+-- Tabela de matches de alerta
+-- ================================
+CREATE TABLE IF NOT EXISTS alert_matches (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    alert_id UUID NOT NULL REFERENCES alert_criteria(id) ON DELETE CASCADE,
+    apartment_id UUID NOT NULL REFERENCES apartments(id) ON DELETE CASCADE,
+    match_score INTEGER DEFAULT 100,
+    notification_sent BOOLEAN DEFAULT false,
+    email_sent BOOLEAN DEFAULT false,
+    whatsapp_sent BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(alert_id, apartment_id)
+);
+
+-- Índices para performance
+CREATE INDEX IF NOT EXISTS idx_alert_criteria_user ON alert_criteria(user_id);
+CREATE INDEX IF NOT EXISTS idx_alert_matches_alert ON alert_matches(alert_id);
+CREATE INDEX IF NOT EXISTS idx_alert_matches_apartment ON alert_matches(apartment_id);
+
+-- Desabilitar RLS
+ALTER TABLE alert_criteria DISABLE ROW LEVEL SECURITY;
+ALTER TABLE alert_matches DISABLE ROW LEVEL SECURITY;
+
+-- ================================
 -- Função e triggers de updated_at
 -- ================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -170,6 +217,11 @@ CREATE TRIGGER update_apartment_reactions_updated_at
 DROP TRIGGER IF EXISTS update_apartment_comments_updated_at ON apartment_comments;
 CREATE TRIGGER update_apartment_comments_updated_at
     BEFORE UPDATE ON apartment_comments
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_alert_criteria_updated_at ON alert_criteria;
+CREATE TRIGGER update_alert_criteria_updated_at
+    BEFORE UPDATE ON alert_criteria
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ================================

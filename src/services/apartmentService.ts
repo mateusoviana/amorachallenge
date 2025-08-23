@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { Apartment } from '../types';
+import { AlertService } from './alertService';
 
 export const apartmentService = {
   // Buscar apartamentos baseado no usuário logado
@@ -257,7 +258,7 @@ export const apartmentService = {
 
     if (error) throw error;
 
-    return {
+    const newApartment = {
       id: data.id,
       title: data.title,
       description: data.description,
@@ -288,6 +289,17 @@ export const apartmentService = {
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),
     };
+
+    // Verificar alertas apenas para apartamentos públicos
+    if (newApartment.isPublic) {
+      try {
+        await AlertService.checkMatches(newApartment);
+      } catch (error) {
+        console.error('Erro ao verificar alertas:', error);
+      }
+    }
+
+    return newApartment;
   },
 
   // Atualizar apartamento

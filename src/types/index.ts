@@ -134,3 +134,43 @@ export interface ApartmentComment {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Sistema de alertas aMORA Avisa
+export interface AlertCriteria {
+  id: string;
+  userId: string;
+  name: string;
+  isActive: boolean;
+  priceMin?: number;
+  priceMax?: number;
+  areaMin?: number;
+  areaMax?: number;
+  bedrooms?: number[];
+  bathrooms?: number[];
+  parkingSpaces?: number[];
+  cities?: string[];
+  neighborhoods?: string[];
+  emailNotifications: boolean;
+  whatsappNotifications: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AlertMatch {
+  id: string;
+  alertId: string;
+  apartmentId: string;
+  matchScore: number;
+  notificationSent: boolean;
+  emailSent: boolean;
+  whatsappSent: boolean;
+  createdAt: Date;
+}
+
+export type NotificationChannel = 'email' | 'whatsapp';
+
+export interface NotificationTemplate {
+  subject: string;
+  body: string;
+  channel: NotificationChannel;
+}

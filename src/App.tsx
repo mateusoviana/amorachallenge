@@ -16,6 +16,7 @@ import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import { Compare, CompareSelect, CompareResult } from './pages/Compare';
 import { MatchSetup, MatchSwipe, MatchRedirect } from './pages/Match';
+import Alerts from './pages/Alerts';
 
 const App: React.FC = () => {
   return (
@@ -42,6 +43,7 @@ const App: React.FC = () => {
                 <Route path="/match" element={<MatchRedirect />} />
                 <Route path="/match/setup" element={<MatchSetup />} />
                 <Route path="/match/swipe" element={<MatchSwipe />} />
+                <Route path="/alerts" element={<Alerts />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Box>
