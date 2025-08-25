@@ -429,11 +429,10 @@ const AddApartment: React.FC = () => {
         )}
 
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={activeTab} onChange={handleTabChange} aria-label="apartment management tabs">
+          <Tabs value={activeTab} onChange={handleTabChange} aria-label="apartment management tabs" variant="fullWidth">
             <Tab label="Cadastrar/Editar" />
             <Tab label="Importar via Link" />
             <Tab label="Meus Imóveis" />
-            {user.userType === 'realtor' && <Tab label="Dashboard" />}
           </Tabs>
         </Box>
 
@@ -890,18 +889,7 @@ const AddApartment: React.FC = () => {
           </Grid>
         </TabPanel>
 
-        {/* Tab 4: Dashboard (apenas para corretores) */}
-        {user.userType === 'realtor' && (
-          <TabPanel value={activeTab} index={3}>
-            <Typography variant="h5" gutterBottom>
-              Dashboard de Imóveis
-            </Typography>
-            <Typography variant="body1" color="text.secondary" paragraph>
-              Esta funcionalidade será implementada em breve com gráficos e estatísticas detalhadas.
-            </Typography>
-            {/* Aqui será implementado o dashboard com gráficos */}
-          </TabPanel>
-        )}
+
       </Paper>
 
 
