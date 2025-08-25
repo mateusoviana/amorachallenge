@@ -174,3 +174,11 @@ export interface NotificationTemplate {
   body: string;
   channel: NotificationChannel;
 }
+
+// Sistema de pontuação por reações
+export interface ApartmentScore {
+  apartmentId: string;
+  totalScore: number;
+  negativeCount: number;
+  reactionCount: number;
+}

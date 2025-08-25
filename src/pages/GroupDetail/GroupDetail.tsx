@@ -41,19 +41,23 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Settings as SettingsIcon,
+  Compare as CompareIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
+import { useApartmentScoring } from '../../hooks/useApartmentScoring';
 import { groupService } from '../../services/groupService';
 import { apartmentService } from '../../services/apartmentService';
 import { GroupNotificationService } from '../../services/groupNotificationService';
 import { Group, GroupMember, Apartment } from '../../types';
 import ApartmentCard from '../../components/ApartmentCard/ApartmentCard';
+import ReactionScoringInfo from '../../components/ReactionScoringInfo';
+import ReactionFeedback from '../../components/ReactionFeedback';
 
 const GroupDetail: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { groupId } = useParams<{ groupId: string }>();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<GroupMember[]>([]);
@@ -76,12 +80,25 @@ const GroupDetail: React.FC = () => {
   const [editGroupDialog, setEditGroupDialog] = useState(false);
   const [editGroupData, setEditGroupData] = useState({ name: '', description: '' });
   const [editGroupLoading, setEditGroupLoading] = useState(false);
+  const [reactionFeedback, setReactionFeedback] = useState<string | null>(null);
+
+  // Hook para pontuação dos apartamentos
+  const { getSortedApartments, refreshScores, recentlyChanged, positionChanges } = useApartmentScoring(apartments, groupId || '');
+  
+  // Detectar mudanças e mostrar feedback
+  useEffect(() => {
+    if (recentlyChanged.length > 0) {
+      const changedCount = recentlyChanged.length;
+      setReactionFeedback(`${changedCount} imóve${changedCount > 1 ? 'is mudaram' : 'l mudou'} de posição!`);
+      setTimeout(() => setReactionFeedback(null), 3000);
+    }
+  }, [recentlyChanged]);
 
   useEffect(() => {
-    if (groupId) {
+    if (groupId && !authLoading) {
       loadGroupData();
     }
-  }, [groupId]);
+  }, [groupId, authLoading]);
 
   const loadGroupData = async () => {
     try {
@@ -218,6 +235,7 @@ const GroupDetail: React.FC = () => {
       setSelectedApartments([]);
       setNotifyMembers(true);
       await loadGroupData();
+      await refreshScores();
       
     } catch (err) {
       setError('Erro ao adicionar imóveis ao grupo');
@@ -241,6 +259,7 @@ const GroupDetail: React.FC = () => {
       await groupService.removeApartmentFromGroup(apartmentId, groupId);
       setSuccess('Imóvel removido do grupo com sucesso!');
       await loadGroupData();
+      await refreshScores();
     } catch (err) {
       setError('Erro ao remover imóvel do grupo');
     }
@@ -296,7 +315,7 @@ const GroupDetail: React.FC = () => {
     );
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4, textAlign: 'center' }}>
         <CircularProgress size={60} />
@@ -518,6 +537,21 @@ const GroupDetail: React.FC = () => {
         </Box>
       </Paper>
 
+      {reactionFeedback && (
+        <Alert 
+          severity="info" 
+          sx={{ 
+            mb: 3,
+            bgcolor: theme.palette.primary.main + '20',
+            border: `1px solid ${theme.palette.primary.main}40`,
+            '& .MuiAlert-icon': { color: theme.palette.primary.main }
+          }}
+          onClose={() => setReactionFeedback(null)}
+        >
+          {reactionFeedback}
+        </Alert>
+      )}
+
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
@@ -532,21 +566,48 @@ const GroupDetail: React.FC = () => {
 
       {/* Seção de Imóveis */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, color: theme.palette.secondary.main }}>
-          Imóveis do Grupo
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, color: theme.palette.secondary.main }}>
+            Imóveis do Grupo
+          </Typography>
+          {apartments.length > 0 && <ReactionScoringInfo />}
+        </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Typography variant="body1" color="text.secondary">
             {apartments.length} imóve{apartments.length !== 1 ? 'is' : 'l'} encontrado{apartments.length !== 1 ? 's' : ''}
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpenAddApartmentDialog}
-            size="small"
-          >
-            Adicionar Imóveis
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {apartments.length >= 2 && (
+              <Button
+                variant="outlined"
+                startIcon={<CompareIcon />}
+                onClick={() => {
+                  const topApartments = getSortedApartments().slice(0, 3);
+                  navigate('/compare/result', {
+                    state: { selectedApartments: topApartments.map(apt => apt.id) }
+                  });
+                }}
+                size="small"
+                sx={{
+                  background: `linear-gradient(135deg, ${theme.palette.secondary.main}15 0%, ${theme.palette.primary.main}15 100%)`,
+                  borderColor: theme.palette.primary.main,
+                  '&:hover': {
+                    background: `linear-gradient(135deg, ${theme.palette.secondary.main}25 0%, ${theme.palette.primary.main}25 100%)`,
+                  }
+                }}
+              >
+                Comparar Top {Math.min(apartments.length, 3)}
+              </Button>
+            )}
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenAddApartmentDialog}
+              size="small"
+            >
+              Adicionar Imóveis
+            </Button>
+          </Box>
         </Box>
       </Box>
 
@@ -577,16 +638,65 @@ const GroupDetail: React.FC = () => {
         </Paper>
       ) : (
         <Grid container spacing={2}>
-          {apartments.map((apartment) => (
+          {getSortedApartments().map((apartment, index) => (
             <Grid item xs={12} sm={6} md={4} lg={3} xl={2} key={apartment.id}>
-              <ApartmentCard 
-                apartment={apartment} 
-                showGroupActions={true}
-                onRemoveFromGroup={() => handleRemoveApartmentFromGroup(apartment.id)}
-                canRemoveFromGroup={isAdmin() || apartment.ownerId === user?.id}
-                groupId={groupId}
-                showReactions={true}
-              />
+              <Box
+                sx={{
+                  position: 'relative',
+                  transition: 'all 0.5s ease',
+                  ...(recentlyChanged.includes(apartment.id) && {
+                    animation: 'pulse 1s ease-in-out 3',
+                    '@keyframes pulse': {
+                      '0%': { transform: 'scale(1)', boxShadow: '0 0 0 0 rgba(252, 148, 252, 0.7)' },
+                      '50%': { transform: 'scale(1.02)', boxShadow: '0 0 0 10px rgba(252, 148, 252, 0)' },
+                      '100%': { transform: 'scale(1)', boxShadow: '0 0 0 0 rgba(252, 148, 252, 0)' },
+                    },
+                  })
+                }}
+              >
+                {/* Badge de posição */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: -8,
+                    left: -8,
+                    zIndex: 10,
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    bgcolor: index === 0 ? '#ffd700' : index === 1 ? '#c0c0c0' : index === 2 ? '#cd7f32' : theme.palette.primary.main,
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    border: '2px solid white',
+                  }}
+                >
+                  {index + 1}
+                </Box>
+                
+                <ApartmentCard 
+                  apartment={apartment} 
+                  showGroupActions={true}
+                  onRemoveFromGroup={() => handleRemoveApartmentFromGroup(apartment.id)}
+                  canRemoveFromGroup={isAdmin() || apartment.ownerId === user?.id}
+                  groupId={groupId}
+                  showReactions={true}
+                  onReactionChange={refreshScores}
+                />
+                
+                {/* Feedback de mudança de posição */}
+                {positionChanges[apartment.id] && (
+                  <ReactionFeedback
+                    show={recentlyChanged.includes(apartment.id)}
+                    change={positionChanges[apartment.id].change}
+                    position={positionChanges[apartment.id].newPos}
+                  />
+                )}
+              </Box>
             </Grid>
           ))}
         </Grid>

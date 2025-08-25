@@ -37,6 +37,7 @@ interface ApartmentCardProps {
   canRemoveFromGroup?: boolean;
   groupId?: string;
   showReactions?: boolean;
+  onReactionChange?: () => void;
   // Quando verdadeiro, o card não navega para a página de detalhes ao ser clicado
   // e permite injetar um manipulador de clique externo
   disableNavigation?: boolean;
@@ -50,6 +51,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   canRemoveFromGroup = false,
   groupId,
   showReactions = false,
+  onReactionChange,
   disableNavigation = false,
   onCardClick,
 }) => {
@@ -249,7 +251,16 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
                 apartmentId={apartment.id}
                 groupId={groupId}
                 reactions={reactions}
-                onReactionChange={handleReactionChange}
+                onReactionChange={async (reaction) => {
+                  console.log('🚀 Reação alterada:', reaction);
+                  await handleReactionChange(reaction);
+                  if (onReactionChange) {
+                    setTimeout(() => {
+                      console.log('🔄 Chamando refresh das pontuações...');
+                      onReactionChange();
+                    }, 500);
+                  }
+                }}
               />
               
               {/* Botão de Comentários */}

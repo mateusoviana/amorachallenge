@@ -25,16 +25,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simular verificação de token salvo
-    const savedUser = localStorage.getItem('amora_user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        localStorage.removeItem('amora_user');
+    const loadUser = async () => {
+      const savedUser = localStorage.getItem('amora_user');
+      if (savedUser) {
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch (error) {
+          localStorage.removeItem('amora_user');
+        }
       }
-    }
-    setLoading(false);
+      // Pequeno delay para garantir que o estado seja atualizado
+      await new Promise(resolve => setTimeout(resolve, 100));
+      setLoading(false);
+    };
+    loadUser();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
