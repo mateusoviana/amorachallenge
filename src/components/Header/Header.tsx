@@ -17,7 +17,6 @@ import {
   Divider,
 } from '@mui/material';
 import {
-  Home as HomeIcon,
   Person as PersonIcon,
   Add as AddIcon,
   AccountCircle as AccountCircleIcon,
@@ -100,19 +99,6 @@ const Header: React.FC = () => {
           alignItems: 'center', 
           gap: 2
         }}>
-          <Button
-            color="inherit"
-            startIcon={<HomeIcon />}
-            onClick={() => navigate('/')}
-            sx={{ 
-              color: 'white', 
-              fontWeight: 600,
-              fontSize: '0.875rem',
-              px: 2
-            }}
-          >
-            Home
-          </Button>
 
           <Button
             color="inherit"
@@ -172,19 +158,19 @@ const Header: React.FC = () => {
 
           {user && (
             <>
-              <Button
-                color="inherit"
-                startIcon={<AddIcon />}
-                onClick={() => navigate('/add-apartment')}
-                sx={{ 
-                  color: 'white', 
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  px: 2
-                }}
-              >
-                Adicionar Imóvel
-              </Button>
+                             <Button
+                 color="inherit"
+                 startIcon={<AddIcon />}
+                 onClick={() => navigate('/add-apartment')}
+                 sx={{ 
+                   color: 'white', 
+                   fontWeight: 600,
+                   fontSize: '0.875rem',
+                   px: 2
+                 }}
+               >
+                 Meus Imóveis
+               </Button>
 
               <Button
                 color="inherit"
@@ -319,20 +305,6 @@ const Header: React.FC = () => {
           </Box>
 
           <List sx={{ pt: 0 }}>
-            <ListItem 
-              button 
-              onClick={() => handleMobileNavigation('/')}
-              sx={{ 
-                borderRadius: 1, 
-                mb: 1,
-                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
-              }}
-            >
-              <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                <HomeIcon />
-              </ListItemIcon>
-              <ListItemText primary="Home" />
-            </ListItem>
 
                          <ListItem 
                button 
@@ -388,20 +360,20 @@ const Header: React.FC = () => {
               <>
                 <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.3)' }} />
                 
-                <ListItem 
-                  button 
-                  onClick={() => handleMobileNavigation('/add-apartment')}
-                  sx={{ 
-                    borderRadius: 1, 
-                    mb: 1,
-                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
-                  }}
-                >
-                  <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                    <AddIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Adicionar Imóvel" />
-                </ListItem>
+                                 <ListItem 
+                   button 
+                   onClick={() => handleMobileNavigation('/add-apartment')}
+                   sx={{ 
+                     borderRadius: 1, 
+                     mb: 1,
+                     '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
+                   }}
+                 >
+                   <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                     <AddIcon />
+                   </ListItemIcon>
+                   <ListItemText primary="Meus Imóveis" />
+                 </ListItem>
 
                 <ListItem 
                   button 
