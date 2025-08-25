@@ -28,6 +28,8 @@ export interface Apartment {
   owner: User;
   groups: Group[];
   images: string[];
+  sourceType: 'manual' | 'link';
+  sourceUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }

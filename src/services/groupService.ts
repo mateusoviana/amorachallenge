@@ -303,6 +303,8 @@ export const groupService = {
         },
         groups: [],
         images: apt.images || [],
+        sourceType: apt.source_type || 'manual',
+        sourceUrl: apt.source_url,
         createdAt: new Date(apt.created_at),
         updatedAt: new Date(apt.updated_at),
       };

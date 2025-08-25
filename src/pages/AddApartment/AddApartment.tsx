@@ -173,6 +173,9 @@ const AddApartment: React.FC = () => {
     setSuccess(null);
 
     try {
+      // Verificar se há URL de origem do import
+      const sourceUrl = sessionStorage.getItem('importSourceUrl');
+      
       const newApartment: Omit<Apartment, 'id' | 'createdAt' | 'updatedAt' | 'owner'> = {
         title: formData.title,
         description: formData.description,
@@ -191,10 +194,14 @@ const AddApartment: React.FC = () => {
         ownerId: user?.id || '',
         groups: userGroups.filter(group => formData.selectedGroups.includes(group.id)),
         images: formData.images,
-
+        sourceType: sourceUrl ? 'link' : 'manual',
+        sourceUrl: sourceUrl || undefined,
       };
 
       const createdApartment = await addApartment(newApartment);
+      
+      // Limpar URL de origem após salvar
+      sessionStorage.removeItem('importSourceUrl');
       
       // Notificar grupos se solicitado
       if (formData.notifyGroups && formData.selectedGroups.length > 0 && user) {
@@ -282,7 +289,6 @@ const AddApartment: React.FC = () => {
         isPublic: formData.isPublic,
         groups: userGroups.filter(group => formData.selectedGroups.includes(group.id)),
         images: formData.images,
-
       };
 
       await updateApartment(editingApartment.id, updates);
@@ -371,6 +377,9 @@ const AddApartment: React.FC = () => {
         images: scrapedData.images,
         notifyGroups: true,
       });
+
+      // Armazenar URL de origem temporariamente
+      sessionStorage.setItem('importSourceUrl', importUrl);
 
       setImportUrl('');
       setSuccess('Dados importados com sucesso! Revise as informações antes de salvar.');

@@ -86,6 +86,8 @@ export const apartmentService = {
         apartments: [],
       })) || [],
       images: apt.images || [],
+      sourceType: apt.source_type || 'manual',
+      sourceUrl: apt.source_url,
       createdAt: new Date(apt.created_at),
       updatedAt: new Date(apt.updated_at),
     })) || [];
@@ -135,6 +137,8 @@ export const apartmentService = {
       },
       groups: [],
       images: data.images || [],
+      sourceType: data.source_type || 'manual',
+      sourceUrl: data.source_url,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),
     };
@@ -218,6 +222,8 @@ export const apartmentService = {
         apartments: [],
       })) || [],
       images: apt.images || [],
+      sourceType: apt.source_type || 'manual',
+      sourceUrl: apt.source_url,
       createdAt: new Date(apt.created_at),
       updatedAt: new Date(apt.updated_at),
     })) || [];
@@ -249,6 +255,8 @@ export const apartmentService = {
         is_public: apartment.isPublic,
         owner_id: apartment.ownerId,
         images: apartment.images,
+        source_type: apartment.sourceType,
+        source_url: apartment.sourceUrl,
       })
       .select(`
         *,
@@ -286,6 +294,8 @@ export const apartmentService = {
       },
       groups: [],
       images: data.images || [],
+      sourceType: data.source_type || 'manual',
+      sourceUrl: data.source_url,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),
     };
@@ -366,6 +376,8 @@ export const apartmentService = {
       },
       groups: [],
       images: data.images || [],
+      sourceType: data.source_type || 'manual',
+      sourceUrl: data.source_url,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),
     };

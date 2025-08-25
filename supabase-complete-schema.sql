@@ -72,6 +72,8 @@ CREATE TABLE IF NOT EXISTS apartments (
     is_public BOOLEAN DEFAULT false,
     owner_id UUID REFERENCES users(id) ON DELETE CASCADE,
     images TEXT[] DEFAULT '{}',
+    source_type VARCHAR(10) DEFAULT 'manual' CHECK (source_type IN ('manual', 'link')),
+    source_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -229,6 +231,8 @@ CREATE TRIGGER update_alert_criteria_updated_at
 -- ================================
 COMMENT ON COLUMN apartments.condominium_fee IS 'Taxa de condomínio mensal em reais';
 COMMENT ON COLUMN apartments.iptu IS 'Valor do IPTU anual em reais';
+COMMENT ON COLUMN apartments.source_type IS 'Tipo de origem do cadastro: manual ou link';
+COMMENT ON COLUMN apartments.source_url IS 'URL original quando importado via link (QuintoAndar, OLX, etc.)';
 
 -- ================================
 -- Dados de teste

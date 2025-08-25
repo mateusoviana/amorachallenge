@@ -13,8 +13,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  ImageList,
-  ImageListItem,
+  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -43,6 +42,8 @@ import {
   ArrowBack as ArrowBackIcon,
   Edit as EditIcon,
   WhatsApp as WhatsAppIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { Apartment, Group } from '../../types';
@@ -60,6 +61,7 @@ const ApartmentDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [addToGroupDialog, setAddToGroupDialog] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string>('');
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -101,6 +103,18 @@ const ApartmentDetail: React.FC = () => {
     setSelectedImage(image);
   };
 
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === 0 ? apartment!.images.length - 1 : prev - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === apartment!.images.length - 1 ? 0 : prev + 1
+    );
+  };
+
   const handleCloseImage = () => {
     setSelectedImage(null);
   };
@@ -116,8 +130,9 @@ const ApartmentDetail: React.FC = () => {
 
   const handleContactOwner = () => {
     if (apartment?.owner) {
-      // Aqui você implementaria a lógica para contatar o proprietário
-      console.log(`Contatando ${apartment.owner.name}`);
+      const subject = `Interesse no imóvel: ${apartment.title}`;
+      const body = `Olá ${apartment.owner.name},\n\nTenho interesse no imóvel "${apartment.title}" que vi na plataforma aMORA.\n\nGostaria de mais informações.\n\nObrigado!`;
+      window.location.href = `mailto:${apartment.owner.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     }
   };
 
@@ -162,39 +177,97 @@ const ApartmentDetail: React.FC = () => {
       <Grid container spacing={4}>
         {/* Coluna Esquerda - Imagens e Informações Principais */}
         <Grid item xs={12} lg={8}>
+          {/* Título do Imóvel */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+            <Typography 
+              variant="h3" 
+              component="h1" 
+              sx={{ 
+                fontWeight: 700, 
+                color: '#4a148c',
+                fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+                fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' }
+              }}
+            >
+              {apartment.title}
+            </Typography>
+            <Chip
+              icon={apartment.isPublic ? <PublicIcon /> : <PrivateIcon />}
+              label={apartment.isPublic ? 'Público' : 'Privado'}
+              color={apartment.isPublic ? 'primary' : 'secondary'}
+              sx={{ fontWeight: 600 }}
+            />
+          </Box>
+
           {/* Galeria de Imagens */}
-          <Paper sx={{ mb: 3, overflow: 'hidden' }}>
-            <ImageList cols={2} rowHeight={300} gap={8}>
-              {apartment.images.map((image, index) => (
-                <ImageListItem 
-                  key={index}
-                  sx={{ cursor: 'pointer' }}
-                  onClick={() => handleImageClick(image)}
-                >
-                  <img
-                    src={image}
-                    alt={`${apartment.title} - Imagem ${index + 1}`}
-                    loading="lazy"
-                    style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                  />
-                </ImageListItem>
-              ))}
-            </ImageList>
+          <Paper sx={{ mb: 3, overflow: 'hidden', position: 'relative' }}>
+            <Box sx={{ position: 'relative', height: 500 }}>
+              <img
+                src={apartment.images[currentImageIndex]}
+                alt={`${apartment.title} - Imagem ${currentImageIndex + 1}`}
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'cover',
+                  cursor: 'pointer'
+                }}
+                onClick={() => handleImageClick(apartment.images[currentImageIndex])}
+              />
+              
+              {apartment.images.length > 1 && (
+                <>
+                  <IconButton
+                    sx={{
+                      position: 'absolute',
+                      left: 16,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'rgba(0,0,0,0.5)',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }
+                    }}
+                    onClick={handlePrevImage}
+                  >
+                    <ChevronLeftIcon />
+                  </IconButton>
+                  
+                  <IconButton
+                    sx={{
+                      position: 'absolute',
+                      right: 16,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'rgba(0,0,0,0.5)',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }
+                    }}
+                    onClick={handleNextImage}
+                  >
+                    <ChevronRightIcon />
+                  </IconButton>
+                  
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: 16,
+                      right: 16,
+                      bgcolor: 'rgba(0,0,0,0.7)',
+                      color: 'white',
+                      px: 2,
+                      py: 1,
+                      borderRadius: 1,
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    {currentImageIndex + 1} / {apartment.images.length}
+                  </Box>
+                </>
+              )}
+            </Box>
           </Paper>
 
           {/* Informações do Imóvel */}
           <Paper sx={{ p: 3, mb: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-              <Typography variant="h4" component="h1" sx={{ fontWeight: 700, color: theme.palette.secondary.main }}>
-                {apartment.title}
-              </Typography>
-              <Chip
-                icon={apartment.isPublic ? <PublicIcon /> : <PrivateIcon />}
-                label={apartment.isPublic ? 'Público' : 'Privado'}
-                color={apartment.isPublic ? 'primary' : 'secondary'}
-                sx={{ fontWeight: 600 }}
-              />
-            </Box>
 
             <Typography variant="h3" component="div" sx={{ fontWeight: 700, color: theme.palette.primary.main, mb: 3 }}>
               {formatPrice(apartment.price)}
@@ -339,13 +412,13 @@ const ApartmentDetail: React.FC = () => {
 
               <Button
                 variant="outlined"
-                startIcon={<PhoneIcon />}
+                startIcon={<EmailIcon />}
                 onClick={handleContactOwner}
                 fullWidth
                 size="large"
                 color="secondary"
               >
-                Contatar Proprietário
+                Enviar Email
               </Button>
 
               <Button
@@ -412,6 +485,33 @@ const ApartmentDetail: React.FC = () => {
             </Typography>
             
             <List dense>
+              <ListItem>
+                <ListItemText
+                  primary="Origem do Cadastro"
+                  secondary={
+                    apartment.sourceType === 'manual' 
+                      ? `Cadastrado manualmente por ${apartment.owner.name}`
+                      : apartment.sourceUrl 
+                        ? (
+                          <Box component="span">
+                            Cadastrado via link: 
+                            <Button 
+                              component="a" 
+                              href={apartment.sourceUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              size="small"
+                              sx={{ ml: 1, textTransform: 'none', p: 0, minWidth: 'auto' }}
+                            >
+                              {apartment.sourceUrl.includes('quintoandar') ? 'QuintoAndar' : 
+                               apartment.sourceUrl.includes('olx') ? 'OLX' : 'Link Original'}
+                            </Button>
+                          </Box>
+                        )
+                        : 'Cadastrado via link'
+                  }
+                />
+              </ListItem>
               <ListItem>
                 <ListItemText
                   primary="Data de Cadastro"
