@@ -508,7 +508,9 @@ const MatchSwipe: React.FC = () => {
                      startIcon={<InfoIcon />}
                      onClick={(e) => {
                        e.stopPropagation();
-                       navigate(`/apartment/${currentApartment.id}`);
+                       navigate(`/apartment/${currentApartment.id}`, {
+                         state: { from: 'match' }
+                       });
                      }}
                      sx={{
                        fontSize: { xs: '0.9rem', sm: '1rem' },

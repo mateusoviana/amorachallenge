@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
   Grid,
@@ -55,6 +55,7 @@ const ApartmentDetail: React.FC = () => {
   const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [apartment, setApartment] = useState<Apartment | null>(null);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -167,7 +168,14 @@ const ApartmentDetail: React.FC = () => {
       {/* Botão Voltar */}
       <Button
         startIcon={<ArrowBackIcon />}
-        onClick={() => navigate('/')}
+        onClick={() => {
+          // Verificar se veio do Match e navegar de volta apropriadamente
+          if (location.state?.from === 'match') {
+            navigate('/match');
+          } else {
+            navigate('/');
+          }
+        }}
         sx={{ mb: 3 }}
         variant="outlined"
       >
