@@ -602,10 +602,16 @@ const GroupDetail: React.FC = () => {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={handleOpenAddApartmentDialog}
+              onClick={() => navigate(`/group/${groupId}/select-apartments`, {
+                state: { 
+                  groupId, 
+                  groupName: group?.name || 'Grupo',
+                  currentSelection: apartments.map(apt => apt.id)
+                }
+              })}
               size="small"
             >
-              Adicionar Imóveis
+              Selecionar Imóveis
             </Button>
           </Box>
         </Box>
@@ -623,9 +629,15 @@ const GroupDetail: React.FC = () => {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={handleOpenAddApartmentDialog}
+              onClick={() => navigate(`/group/${groupId}/select-apartments`, {
+                state: { 
+                  groupId, 
+                  groupName: group?.name || 'Grupo',
+                  currentSelection: apartments.map(apt => apt.id)
+                }
+              })}
             >
-              Adicionar Imóveis Existentes
+              Selecionar Imóveis
             </Button>
             <Button
               variant="outlined"

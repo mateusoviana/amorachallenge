@@ -214,14 +214,44 @@ export const groupService = {
 
   // Adicionar apartamento ao grupo
   async addApartmentToGroup(apartmentId: string, groupId: string): Promise<void> {
-    const { error } = await supabase
-      .from('apartment_groups')
-      .insert({
-        apartment_id: apartmentId,
-        group_id: groupId,
-      });
+    console.log('groupService.addApartmentToGroup chamado com:', { apartmentId, groupId });
     
-    if (error) throw error;
+    try {
+      // Verificar se o apartamento já existe no grupo
+      const { data: existingData, error: checkError } = await supabase
+        .from('apartment_groups')
+        .select('*')
+        .eq('apartment_id', apartmentId)
+        .eq('group_id', groupId);
+      
+      if (checkError) {
+        console.error('Erro ao verificar apartamento existente:', checkError);
+        throw checkError;
+      }
+      
+      if (existingData && existingData.length > 0) {
+        console.log('Apartamento já existe no grupo, ignorando...');
+        return; // Apartamento já existe, não é um erro
+      }
+      
+      // Inserir o apartamento no grupo
+      const { error } = await supabase
+        .from('apartment_groups')
+        .insert({
+          apartment_id: apartmentId,
+          group_id: groupId,
+        });
+      
+      if (error) {
+        console.error('Erro do Supabase ao adicionar apartamento ao grupo:', error);
+        throw error;
+      }
+      
+      console.log('Apartamento adicionado ao grupo com sucesso no Supabase');
+    } catch (err) {
+      console.error('Erro capturado no groupService.addApartmentToGroup:', err);
+      throw err;
+    }
   },
 
   // Remover apartamento do grupo
