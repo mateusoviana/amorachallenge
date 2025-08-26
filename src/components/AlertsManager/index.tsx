@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Card, CardContent, Typography, Button, Dialog, DialogTitle,
   DialogContent, TextField, FormControlLabel, Switch, Chip,
-  IconButton, Grid, Slider, Autocomplete
+  IconButton, Grid, Slider, Autocomplete, Snackbar, Alert, DialogActions
 } from '@mui/material';
 import { Add, Delete, Edit, NotificationsActive } from '@mui/icons-material';
 import { AlertCriteria } from '../../types';
@@ -14,6 +14,25 @@ export const AlertsManager: React.FC = () => {
   const [alerts, setAlerts] = useState<AlertCriteria[]>([]);
   const [open, setOpen] = useState(false);
   const [editingAlert, setEditingAlert] = useState<AlertCriteria | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    alertId: string | null;
+    alertName: string;
+  }>({
+    open: false,
+    alertId: null,
+    alertName: ''
+  });
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'info';
+  }>({
+    open: false,
+    message: '',
+    severity: 'info'
+  });
   const [formData, setFormData] = useState({
     name: '',
     priceRange: [0, 2000000] as [number, number],
@@ -43,16 +62,32 @@ export const AlertsManager: React.FC = () => {
       setAlerts(userAlerts);
     } catch (error) {
       console.error('Erro ao carregar alertas:', error);
+      setSnackbar({
+        open: true,
+        message: 'Erro ao carregar alertas. Tente novamente.',
+        severity: 'error'
+      });
     }
   };
 
   const handleSave = async () => {
     if (!user) return;
     
+    // Validação básica
+    if (!formData.name.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'Por favor, insira um nome para o alerta.',
+        severity: 'error'
+      });
+      return;
+    }
+    
+    setLoading(true);
     try {
       const alertData = {
         userId: user.id,
-        name: formData.name,
+        name: formData.name.trim(),
         isActive: true,
         priceMin: formData.priceRange[0] > 0 ? formData.priceRange[0] : undefined,
         priceMax: formData.priceRange[1] < 2000000 ? formData.priceRange[1] : undefined,
@@ -67,11 +102,91 @@ export const AlertsManager: React.FC = () => {
         whatsappNotifications: formData.whatsappNotifications
       };
 
-      await AlertService.createAlert(alertData);
+      if (editingAlert) {
+        // Atualizar alerta existente
+        await AlertService.updateAlert(editingAlert.id, alertData);
+        setSnackbar({
+          open: true,
+          message: 'Alerta atualizado com sucesso!',
+          severity: 'success'
+        });
+      } else {
+        // Criar novo alerta
+        await AlertService.createAlert(alertData);
+        setSnackbar({
+          open: true,
+          message: 'Alerta criado com sucesso!',
+          severity: 'success'
+        });
+      }
+      
       await loadAlerts();
       handleClose();
     } catch (error) {
       console.error('Erro ao salvar alerta:', error);
+      setSnackbar({
+        open: true,
+        message: 'Erro ao salvar alerta. Tente novamente.',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (alert: AlertCriteria) => {
+    setEditingAlert(alert);
+    setFormData({
+      name: alert.name,
+      priceRange: [
+        alert.priceMin || 0,
+        alert.priceMax || 2000000
+      ],
+      areaRange: [
+        alert.areaMin || 0,
+        alert.areaMax || 500
+      ],
+      bedrooms: alert.bedrooms || [],
+      bathrooms: alert.bathrooms || [],
+      parkingSpaces: alert.parkingSpaces || [],
+      cities: alert.cities || [],
+      neighborhoods: alert.neighborhoods || [],
+      emailNotifications: alert.emailNotifications,
+      whatsappNotifications: alert.whatsappNotifications
+    });
+    setOpen(true);
+  };
+
+  const handleDeleteClick = (alert: AlertCriteria) => {
+    setDeleteConfirm({
+      open: true,
+      alertId: alert.id,
+      alertName: alert.name
+    });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm.alertId) return;
+    
+    setLoading(true);
+    try {
+      await AlertService.deleteAlert(deleteConfirm.alertId);
+      await loadAlerts();
+      setSnackbar({
+        open: true,
+        message: 'Alerta excluído com sucesso!',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Erro ao excluir alerta:', error);
+      setSnackbar({
+        open: true,
+        message: 'Erro ao excluir alerta. Tente novamente.',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+      setDeleteConfirm({ open: false, alertId: null, alertName: '' });
     }
   };
 
@@ -90,6 +205,10 @@ export const AlertsManager: React.FC = () => {
       emailNotifications: true,
       whatsappNotifications: false
     });
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
   };
 
   return (
@@ -116,10 +235,10 @@ export const AlertsManager: React.FC = () => {
                 <Box display="flex" justifyContent="space-between" alignItems="start">
                   <Typography variant="h6">{alert.name}</Typography>
                   <Box>
-                    <IconButton size="small">
+                    <IconButton size="small" onClick={() => handleEdit(alert)}>
                       <Edit />
                     </IconButton>
-                    <IconButton size="small" color="error">
+                    <IconButton size="small" color="error" onClick={() => handleDeleteClick(alert)}>
                       <Delete />
                     </IconButton>
                   </Box>
@@ -147,8 +266,11 @@ export const AlertsManager: React.FC = () => {
         ))}
       </Grid>
 
+      {/* Diálogo de criação/edição */}
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>Novo Alerta aMORA Avisa</DialogTitle>
+        <DialogTitle>
+          {editingAlert ? `Editar Alerta: ${editingAlert.name}` : 'Novo Alerta aMORA Avisa'}
+        </DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
@@ -156,6 +278,7 @@ export const AlertsManager: React.FC = () => {
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             margin="normal"
+            required
           />
 
           <Typography gutterBottom sx={{ mt: 3 }}>Faixa de Preço</Typography>
@@ -244,10 +367,54 @@ export const AlertsManager: React.FC = () => {
 
           <Box mt={3} display="flex" gap={2} justifyContent="flex-end">
             <Button onClick={handleClose}>Cancelar</Button>
-            <Button variant="contained" onClick={handleSave}>Salvar Alerta</Button>
+            <Button 
+              variant="contained" 
+              onClick={handleSave}
+              disabled={loading}
+            >
+              {editingAlert ? 'Atualizar Alerta' : 'Salvar Alerta'}
+            </Button>
           </Box>
         </DialogContent>
       </Dialog>
+
+      {/* Diálogo de confirmação de exclusão */}
+      <Dialog open={deleteConfirm.open} onClose={() => setDeleteConfirm({ open: false, alertId: null, alertName: '' })}>
+        <DialogTitle>Confirmar Exclusão</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Tem certeza que deseja excluir o alerta "{deleteConfirm.alertName}"?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Esta ação não pode ser desfeita.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirm({ open: false, alertId: null, alertName: '' })}>
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleDeleteConfirm} 
+            color="error" 
+            variant="contained"
+            disabled={loading}
+          >
+            {loading ? 'Excluindo...' : 'Excluir'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar para feedback */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -42,6 +42,63 @@ export class AlertService {
     return data.map(this.mapAlert);
   }
 
+  // Atualizar alerta existente
+  static async updateAlert(alertId: string, alert: Partial<AlertCriteria>): Promise<AlertCriteria> {
+    console.log('🔄 Atualizando alerta:', { alertId, alert });
+    
+    const updateData: any = {};
+    
+    if (alert.name !== undefined) updateData.name = alert.name;
+    if (alert.isActive !== undefined) updateData.is_active = alert.isActive;
+    if (alert.priceMin !== undefined) updateData.price_min = alert.priceMin;
+    if (alert.priceMax !== undefined) updateData.price_max = alert.priceMax;
+    if (alert.areaMin !== undefined) updateData.area_min = alert.areaMin;
+    if (alert.areaMax !== undefined) updateData.area_max = alert.areaMax;
+    if (alert.bedrooms !== undefined) updateData.bedrooms = alert.bedrooms;
+    if (alert.bathrooms !== undefined) updateData.bathrooms = alert.bathrooms;
+    if (alert.parkingSpaces !== undefined) updateData.parking_spaces = alert.parkingSpaces;
+    if (alert.cities !== undefined) updateData.cities = alert.cities;
+    if (alert.neighborhoods !== undefined) updateData.neighborhoods = alert.neighborhoods;
+    if (alert.emailNotifications !== undefined) updateData.email_notifications = alert.emailNotifications;
+    if (alert.whatsappNotifications !== undefined) updateData.whatsapp_notifications = alert.whatsappNotifications;
+    
+    updateData.updated_at = new Date().toISOString();
+
+    console.log('📝 Dados para atualização:', updateData);
+
+    const { data, error } = await supabase
+      .from('alert_criteria')
+      .update(updateData)
+      .eq('id', alertId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Erro ao atualizar alerta:', error);
+      throw error;
+    }
+    
+    console.log('✅ Alerta atualizado com sucesso:', data);
+    return this.mapAlert(data);
+  }
+
+  // Excluir alerta
+  static async deleteAlert(alertId: string): Promise<void> {
+    console.log('🗑️ Excluindo alerta:', alertId);
+    
+    const { error } = await supabase
+      .from('alert_criteria')
+      .delete()
+      .eq('id', alertId);
+
+    if (error) {
+      console.error('❌ Erro ao excluir alerta:', error);
+      throw error;
+    }
+    
+    console.log('✅ Alerta excluído com sucesso');
+  }
+
   // Verificar matches para um apartamento
   static async checkMatches(apartment: Apartment): Promise<void> {
     const { data: alerts, error } = await supabase
