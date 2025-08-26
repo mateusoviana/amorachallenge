@@ -63,10 +63,7 @@ const MatchSwipe: React.FC = () => {
     }
   }, [preferences]);
 
-  // Debug: monitorar mudanças no estado showPreferencesDialog
-  useEffect(() => {
-    console.log('Estado showPreferencesDialog mudou para:', showPreferencesDialog);
-  }, [showPreferencesDialog]);
+
 
   const loadPreferences = () => {
     const savedPreferences = localStorage.getItem('matchPreferences');
@@ -348,12 +345,7 @@ const MatchSwipe: React.FC = () => {
           </Box>
           <Button
             variant="contained"
-            onClick={() => {
-              console.log('Botão Ajustar Preferências clicado!');
-              console.log('Estado atual showPreferencesDialog:', showPreferencesDialog);
-              setShowPreferencesDialog(true);
-              console.log('setShowPreferencesDialog(true) executado');
-            }}
+            onClick={() => setShowPreferencesDialog(true)}
             startIcon={<SettingsIcon />}
             sx={{ 
               fontSize: '1.1rem',
@@ -365,27 +357,7 @@ const MatchSwipe: React.FC = () => {
             Ajustar Preferências
           </Button>
           
-          {/* Botão de teste */}
-          <Button
-            variant="outlined"
-            onClick={() => {
-              alert('Teste: Estado atual = ' + showPreferencesDialog);
-              setShowPreferencesDialog(true);
-              setTimeout(() => {
-                alert('Após setShowPreferencesDialog(true) = ' + showPreferencesDialog);
-              }, 100);
-            }}
-            sx={{ mt: 2 }}
-          >
-            Teste Simples
-          </Button>
-          
-          {/* Debug visual */}
-          <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1, textAlign: 'center' }}>
-            <Typography variant="caption">
-              Estado showPreferencesDialog: <strong>{showPreferencesDialog.toString()}</strong>
-            </Typography>
-          </Box>
+
         </Container>
 
         {/* Dialog de Preferências - Renderizado aqui também */}
