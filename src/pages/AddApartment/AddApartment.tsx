@@ -826,62 +826,159 @@ const AddApartment: React.FC = () => {
           <Grid container spacing={3}>
             {userApartments.map((apartment) => (
               <Grid item xs={12} sm={6} md={4} key={apartment.id}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" component="h3" gutterBottom>
+                <Card sx={{ 
+                  height: 400,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                  }
+                }}>
+                  <CardContent sx={{ 
+                    flex: 1, 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    p: 2.5
+                  }}>
+                    <Typography 
+                      variant="h6" 
+                      component="h3" 
+                      gutterBottom
+                      sx={{ 
+                        fontWeight: 600,
+                        fontSize: '1.1rem',
+                        lineHeight: 1.3,
+                        mb: 1.5,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical'
+                      }}
+                    >
                       {apartment.title}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                      {apartment.description.substring(0, 100)}...
+                    
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary" 
+                      sx={{ 
+                        mb: 2,
+                        flex: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        lineHeight: 1.4
+                      }}
+                    >
+                      {apartment.description}
                     </Typography>
-                    <Typography variant="h6" color="primary" gutterBottom>
+                    
+                    <Typography 
+                      variant="h6" 
+                      color="primary" 
+                      sx={{ 
+                        fontWeight: 700,
+                        fontSize: '1.25rem',
+                        mb: 1.5
+                      }}
+                    >
                       R$ {apartment.price.toLocaleString()}
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                    
+                    <Box sx={{ 
+                      display: 'flex', 
+                      gap: 0.5, 
+                      mb: 1.5,
+                      flexWrap: 'wrap'
+                    }}>
                       <Chip 
                         size="small" 
                         label={`${apartment.bedrooms} quartos`} 
                         variant="outlined" 
+                        sx={{ fontSize: '0.75rem' }}
                       />
                       <Chip 
                         size="small" 
                         label={`${apartment.bathrooms} banheiros`} 
                         variant="outlined" 
+                        sx={{ fontSize: '0.75rem' }}
                       />
                       <Chip 
                         size="small" 
                         label={`${apartment.area}m²`} 
                         variant="outlined" 
+                        sx={{ fontSize: '0.75rem' }}
                       />
                     </Box>
-                    <Typography variant="caption" color="text.secondary">
+                    
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary"
+                      sx={{ 
+                        mb: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        lineHeight: 1.3
+                      }}
+                    >
                       {apartment.address}, {apartment.neighborhood}, {apartment.city}-{apartment.state}
                     </Typography>
-                    <Box sx={{ mt: 1 }}>
+                    
+                    <Box sx={{ mt: 'auto' }}>
                       <Chip 
                         size="small" 
                         label={apartment.isPublic ? 'Público' : 'Privado'} 
                         color={apartment.isPublic ? 'success' : 'default'} 
                         variant="outlined" 
+                        sx={{ fontSize: '0.75rem' }}
                       />
                     </Box>
                   </CardContent>
-                  <CardActions>
-                    <IconButton 
-                      size="small" 
-                      onClick={() => handleEditApartment(apartment)}
-                      color="primary"
-                    >
-                      <EditIcon />
-                    </IconButton>
+                  
+                  <CardActions sx={{ 
+                    p: 1.5, 
+                    pt: 0,
+                    justifyContent: 'space-between',
+                    borderTop: '1px solid',
+                    borderColor: 'divider'
+                  }}>
+                    <Box>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleEditApartment(apartment)}
+                        color="primary"
+                        sx={{ 
+                          '&:hover': {
+                            backgroundColor: 'primary.main',
+                            color: 'white'
+                          }
+                        }}
+                      >
+                        <EditIcon />
+                      </IconButton>
 
-                    <IconButton 
-                      size="small" 
-                      onClick={() => handleDeleteApartment(apartment.id)}
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleDeleteApartment(apartment.id)}
+                        color="error"
+                        sx={{ 
+                          '&:hover': {
+                            backgroundColor: 'error.main',
+                            color: 'white'
+                          }
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
                   </CardActions>
                 </Card>
               </Grid>

@@ -42,6 +42,8 @@ interface ApartmentCardProps {
   // e permite injetar um manipulador de clique externo
   disableNavigation?: boolean;
   onCardClick?: (e: React.MouseEvent) => void;
+  // Estilos customizados para o card
+  customStyles?: any;
 }
 
 const ApartmentCard: React.FC<ApartmentCardProps> = ({ 
@@ -54,6 +56,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
   onReactionChange,
   disableNavigation = false,
   onCardClick,
+  customStyles,
 }) => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -110,6 +113,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
           transform: 'translateY(-4px)',
           boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
         },
+        ...customStyles,
       }}
       onClick={(e) => {
         if (disableNavigation) {

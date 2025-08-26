@@ -17,6 +17,7 @@ import Register from './pages/Register/Register';
 import { Compare, CompareSelect, CompareResult } from './pages/Compare';
 import { MatchSetup, MatchSwipe, MatchRedirect } from './pages/Match';
 import Alerts from './pages/Alerts';
+import GroupApartmentSelect from './pages/GroupDetail/GroupApartmentSelect';
 
 const App: React.FC = () => {
   return (
@@ -35,6 +36,7 @@ const App: React.FC = () => {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/groups" element={<Groups />} />
                 <Route path="/group/:groupId" element={<GroupDetail />} />
+                <Route path="/group/:groupId/select-apartments" element={<GroupApartmentSelect />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/compare" element={<Compare />} />
