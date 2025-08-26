@@ -19,11 +19,19 @@ import {
   CardContent,
   Grid,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Calculate as CalculateIcon,
   Download as DownloadIcon,
+  Info as InfoIcon,
+  TrendingUp as TrendingUpIcon,
+  Home as HomeIcon,
+  Payment as PaymentIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Apartment } from '../../types';
@@ -53,6 +61,7 @@ const CompareResult: React.FC = () => {
   const [exportingPDF, setExportingPDF] = useState(false);
   const [recalculateTrigger, setRecalculateTrigger] = useState(0);
   const [tableData, setTableData] = useState<ComparisonRow[]>([]);
+  const [infoDialogOpen, setInfoDialogOpen] = useState(false);
 
   useEffect(() => {
     loadApartments();
@@ -120,6 +129,12 @@ const CompareResult: React.FC = () => {
     };
   };
 
+  // Calcular entrada mínima aMORA (5% ou R$10.000, o que for maior)
+  const calculateAmoraEntry = (apartmentPrice: number) => {
+    const fivePercentEntry = apartmentPrice * 0.05;
+    return fivePercentEntry < 10000 ? 10000 : fivePercentEntry;
+  };
+
   const generateComparisonData = (): ComparisonRow[] => {
     if (apartments.length === 0 || entryValues.length === 0) return [];
 
@@ -180,19 +195,16 @@ const CompareResult: React.FC = () => {
         highlight: true,
       },
       {
-        label: 'Entrada Inicial',
-        values: currentEntryValues.map(value => formatCurrency(value)),
-      },
-      {
-        label: 'Entrada Total Necessária (20%)',
+        label: 'Entrada Tradicional (20%)',
         values: apartments.map(apt => formatCurrency(apt.price * 0.2)),
       },
       {
-        label: 'Entrada Restante',
-        values: apartments.map((apt, index) => {
-          const remaining = (apt.price * 0.2) - currentEntryValues[index];
-          return remaining > 0 ? formatCurrency(remaining) : 'Entrada completa';
-        }),
+        label: 'Entrada aMORA (5% ou R$10.000)',
+        values: apartments.map(apt => formatCurrency(calculateAmoraEntry(apt.price))),
+      },
+      {
+        label: 'Economia na Entrada',
+        values: apartments.map(apt => formatCurrency((apt.price * 0.2) - calculateAmoraEntry(apt.price))),
       },
       {
         label: 'Parcela de Aluguel (0,6%)',
@@ -200,16 +212,18 @@ const CompareResult: React.FC = () => {
       },
       {
         label: 'Parcela de Entrada (36x)',
-        values: apartments.map((apt, index) => {
-          const remaining = (apt.price * 0.2) - currentEntryValues[index];
+        values: apartments.map(apt => {
+          const amoraEntry = calculateAmoraEntry(apt.price);
+          const remaining = (apt.price * 0.2) - amoraEntry;
           if (remaining <= 0) return 'R$ 0,00';
           return formatCurrency((remaining * 1.1) / 36);
         }),
       },
       {
-        label: 'MENSALIDADE TOTAL',
-        values: apartments.map((apt, index) => {
-          const financing = calculateFinancing(apt.price, currentEntryValues[index]);
+        label: 'MENSALIDADE TOTAL aMORA',
+        values: apartments.map(apt => {
+          const amoraEntry = calculateAmoraEntry(apt.price);
+          const financing = calculateFinancing(apt.price, amoraEntry);
           return financing ? formatCurrency(financing.total) : 'Entrada insuficiente';
         }),
         highlight: true,
@@ -457,55 +471,188 @@ const CompareResult: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Configuração de Entrada */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <CalculateIcon />
-            Configurar Entrada Inicial
-          </Typography>
-          <Grid container spacing={2}>
-            {apartments.map((apartment, index) => (
-              <Grid item xs={12} md={4} key={apartment.id}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  {apartment.title}
-                </Typography>
-                <TextField
-                  fullWidth
-                  label="Entrada Inicial (R$)"
-                  type="number"
-                  value={entryValues[index]}
-                  onChange={(e) => handleEntryChange(index, e.target.value)}
-                  InputProps={{
-                    startAdornment: <Typography variant="caption">R$</Typography>,
-                  }}
-                  helperText={`20% necessário: ${formatCurrency(apartment.price * 0.2)}`}
-                />
-              </Grid>
-            ))}
-          </Grid>
-          <Box sx={{ mt: 3, textAlign: 'center' }}>
-            <Button
-              variant="contained"
-              startIcon={<CalculateIcon />}
-              onClick={handleRecalculate}
-              sx={{
-                background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.primary.main} 100%)`,
+      {/* Simule a mensalidade aMORA */}
+      <Card sx={{ 
+        mb: 4,
+        background: `linear-gradient(135deg, rgba(4, 20, 76, 0.85) 0%, rgba(26, 43, 107, 0.85) 100%)`,
+        boxShadow: '0 8px 32px rgba(4, 20, 76, 0.3)',
+        border: '2px solid rgba(4, 20, 76, 0.2)',
+        backdropFilter: 'blur(10px)',
+      }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <CalculateIcon sx={{ fontSize: 28, color: 'white' }} />
+              <Typography variant="h5" sx={{ 
+                fontWeight: 700, 
                 color: 'white',
-                fontWeight: 600,
-                px: 3,
-                py: 1,
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+              }}>
+                Simule a mensalidade aMORA
+              </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              startIcon={<InfoIcon />}
+              onClick={() => setInfoDialogOpen(true)}
+              sx={{
+                borderColor: 'white',
+                color: 'white',
                 '&:hover': {
-                  background: `linear-gradient(135deg, ${theme.palette.secondary.dark} 0%, ${theme.palette.primary.dark} 100%)`,
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
-                },
-                transition: 'all 0.3s ease',
+                  borderColor: 'white',
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                }
               }}
             >
-              Recalcular Mensalidades
+              Como funciona
             </Button>
           </Box>
+
+          <Typography variant="body1" sx={{ mb: 3, color: 'rgba(255,255,255,0.9)', lineHeight: 1.6 }}>
+            Compare as opções de entrada e descubra como a aMORA pode tornar sua conquista imobiliária mais acessível.
+          </Typography>
+
+          <Grid container spacing={3}>
+            {apartments.map((apartment, index) => {
+              const traditionalEntry = apartment.price * 0.2;
+              const amoraEntry = calculateAmoraEntry(apartment.price);
+              
+              return (
+                <Grid item xs={12} md={6} lg={4} key={apartment.id}>
+                  <Paper sx={{ 
+                    p: 3, 
+                    height: '100%',
+                    background: 'white',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                    border: '1px solid rgba(0, 0, 0, 0.05)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}>
+                    <Box sx={{ 
+                      height: '80px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      mb: 3
+                    }}>
+                      <Typography variant="h6" sx={{ 
+                        fontWeight: 600, 
+                        color: theme.palette.text.primary,
+                        textAlign: 'center',
+                        lineHeight: 1.2
+                      }}>
+                        {apartment.title}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {/* Entrada Tradicional */}
+                      <Box sx={{ 
+                        p: 2, 
+                        bgcolor: '#ffebee', 
+                        borderRadius: 2, 
+                        border: '2px solid #f44336',
+                        height: '140px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center'
+                      }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          <PaymentIcon sx={{ color: '#d32f2f', fontSize: 20 }} />
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#d32f2f' }}>
+                            Entrada Tradicional
+                          </Typography>
+                        </Box>
+                        <Typography variant="h5" sx={{ 
+                          fontWeight: 700, 
+                          color: '#d32f2f',
+                          textAlign: 'center',
+                          fontSize: '1.5rem',
+                          mb: 0.5
+                        }}>
+                          {formatCurrency(traditionalEntry)}
+                        </Typography>
+                        <Typography variant="caption" sx={{ 
+                          color: '#d32f2f', 
+                          display: 'block', 
+                          textAlign: 'center',
+                          fontWeight: 500
+                        }}>
+                          (20% do valor do imóvel)
+                        </Typography>
+                      </Box>
+
+                      {/* Entrada aMORA */}
+                      <Box sx={{ 
+                        p: 2, 
+                        bgcolor: '#e8f5e8', 
+                        borderRadius: 2, 
+                        border: '2px solid #4caf50',
+                        height: '140px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center'
+                      }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          <TrendingUpIcon sx={{ color: '#2e7d32', fontSize: 20 }} />
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#2e7d32' }}>
+                            Entrada aMORA
+                          </Typography>
+                        </Box>
+                        <Typography variant="h5" sx={{ 
+                          fontWeight: 700, 
+                          color: '#2e7d32',
+                          textAlign: 'center',
+                          fontSize: '1.5rem',
+                          mb: 0.5
+                        }}>
+                          {formatCurrency(amoraEntry)}
+                        </Typography>
+                        <Typography variant="caption" sx={{ 
+                          color: '#2e7d32', 
+                          display: 'block', 
+                          textAlign: 'center',
+                          fontWeight: 500
+                        }}>
+                          (5% ou R$ 10.000, o que for maior)
+                        </Typography>
+                      </Box>
+
+                      {/* Economia */}
+                      <Box sx={{ 
+                        p: 2, 
+                        bgcolor: '#fff3e0', 
+                        borderRadius: 2, 
+                        border: '2px solid #ff9800',
+                        height: '140px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center'
+                      }}>
+                        <Typography variant="subtitle2" sx={{ 
+                          fontWeight: 600, 
+                          color: '#e65100',
+                          textAlign: 'center',
+                          mb: 1
+                        }}>
+                          Você economiza
+                        </Typography>
+                        <Typography variant="h6" sx={{ 
+                          fontWeight: 700, 
+                          color: '#e65100',
+                          textAlign: 'center'
+                        }}>
+                          {formatCurrency(traditionalEntry - amoraEntry)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
+                </Grid>
+              );
+            })}
+          </Grid>
+
+
         </CardContent>
       </Card>
 
@@ -573,24 +720,51 @@ const CompareResult: React.FC = () => {
           </Typography>
           <Grid container spacing={2}>
             {apartments.map((apartment, index) => {
-              const financing = calculateFinancing(apartment.price, entryValues[index]);
+              const amoraEntry = calculateAmoraEntry(apartment.price);
+              const financing = calculateFinancing(apartment.price, amoraEntry);
+              const traditionalEntry = apartment.price * 0.2;
+              
               return (
                 <Grid item xs={12} md={4} key={apartment.id}>
-                  <Box sx={{ p: 2, border: `1px solid ${theme.palette.divider}`, borderRadius: 1 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                  <Box sx={{ 
+                    p: 3, 
+                    border: `2px solid ${theme.palette.divider}`, 
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                  }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: theme.palette.secondary.main }}>
                       {apartment.title}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       {apartment.neighborhood}, {apartment.city}
                     </Typography>
-                    <Typography variant="h6" color="primary" sx={{ fontWeight: 600, mb: 1 }}>
+                    <Typography variant="h5" color="primary" sx={{ fontWeight: 700, mb: 2 }}>
                       {formatCurrency(apartment.price)}
                     </Typography>
+                    
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: '#d32f2f' }}>
+                        Entrada Tradicional: {formatCurrency(traditionalEntry)}
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: '#2e7d32' }}>
+                        Entrada aMORA: {formatCurrency(amoraEntry)}
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#e65100' }}>
+                        Economia: {formatCurrency(traditionalEntry - amoraEntry)}
+                      </Typography>
+                    </Box>
+                    
                     {financing && (
                       <Chip
-                        label={`Mensalidade: ${formatCurrency(financing.total)}`}
+                        label={`Mensalidade aMORA: ${formatCurrency(financing.total)}`}
                         color="secondary"
-                        size="small"
+                        size="medium"
+                        sx={{ 
+                          fontWeight: 600,
+                          fontSize: '0.9rem',
+                          py: 1
+                        }}
                       />
                     )}
                   </Box>
@@ -600,6 +774,103 @@ const CompareResult: React.FC = () => {
           </Grid>
         </CardContent>
       </Card>
+
+      {/* Diálogo de informações sobre a aMORA */}
+      <Dialog
+        open={infoDialogOpen}
+        onClose={() => setInfoDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ 
+          bgcolor: theme.palette.secondary.main, 
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2
+        }}>
+          <HomeIcon />
+          Como funciona a aMORA
+        </DialogTitle>
+        <DialogContent sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ mb: 2, color: theme.palette.secondary.main, fontWeight: 600 }}>
+            Transformando sonhos em realidade imobiliária
+          </Typography>
+          
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: theme.palette.text.primary }}>
+              🏠 O que é a aMORA?
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.6 }}>
+              A aMORA é uma solução inovadora que compra o imóvel para você e permite que você realize seu sonho da casa própria com uma entrada muito menor.
+            </Typography>
+          </Box>
+
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: theme.palette.text.primary }}>
+              💰 Como funciona o financiamento?
+            </Typography>
+            <Box component="ul" sx={{ pl: 2 }}>
+              <Typography component="li" variant="body1" sx={{ mb: 1, lineHeight: 1.6 }}>
+                <strong>Entrada reduzida:</strong> Apenas 5% do valor do imóvel (mínimo R$ 10.000)
+              </Typography>
+              <Typography component="li" variant="body1" sx={{ mb: 1, lineHeight: 1.6 }}>
+                <strong>Aluguel durante 3 anos:</strong> Você paga um aluguel de 0,6% do valor do imóvel por mês
+              </Typography>
+              <Typography component="li" variant="body1" sx={{ mb: 1, lineHeight: 1.6 }}>
+                <strong>Parcela da entrada:</strong> O restante da entrada tradicional (15%) é parcelado em 36 meses
+              </Typography>
+              <Typography component="li" variant="body1" sx={{ mb: 1, lineHeight: 1.6 }}>
+                <strong>Financiamento próprio:</strong> Após 3 anos, você pode financiar o imóvel com bancos tradicionais
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: theme.palette.text.primary }}>
+              ✅ Vantagens da aMORA
+            </Typography>
+            <Box component="ul" sx={{ pl: 2 }}>
+              <Typography component="li" variant="body1" sx={{ mb: 1, lineHeight: 1.6 }}>
+                <strong>Entrada muito menor:</strong> Economia de até 75% na entrada inicial
+              </Typography>
+              <Typography component="li" variant="body1" sx={{ mb: 1, lineHeight: 1.6 }}>
+                <strong>Flexibilidade:</strong> Você pode morar no imóvel ou alugá-lo
+              </Typography>
+              <Typography component="li" variant="body1" sx={{ mb: 1, lineHeight: 1.6 }}>
+                <strong>Segurança:</strong> O imóvel fica em seu nome desde o início
+              </Typography>
+              <Typography component="li" variant="body1" sx={{ mb: 1, lineHeight: 1.6 }}>
+                <strong>Transparência:</strong> Sem taxas ocultas ou surpresas
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ p: 2, bgcolor: theme.palette.primary.light, borderRadius: 2 }}>
+            <Typography variant="body1" sx={{ 
+              textAlign: 'center', 
+              fontWeight: 600,
+              color: theme.palette.primary.contrastText
+            }}>
+              💡 Dica: Use a calculadora acima para simular diferentes cenários e encontrar a melhor opção para você!
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, bgcolor: theme.palette.grey[50] }}>
+          <Button 
+            onClick={() => setInfoDialogOpen(false)}
+            variant="contained"
+            sx={{
+              bgcolor: theme.palette.secondary.main,
+              '&:hover': {
+                bgcolor: theme.palette.secondary.dark,
+              }
+            }}
+          >
+            Entendi!
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

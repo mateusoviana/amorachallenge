@@ -18,9 +18,24 @@ import {
   PieChart as PieChartIcon,
   TrendingUp as TrendingUpIcon,
   Home as HomeIcon,
-  LocationOn as LocationIcon,
   AttachMoney as MoneyIcon,
+  ShowChart as ShowChartIcon,
 } from '@mui/icons-material';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+} from 'recharts';
 import { useAuth } from '../../hooks/useAuth';
 import { useUserApartments } from '../../hooks/useUserApartments';
 import { DashboardStats, NeighborhoodStats, NeighborhoodPriceStats, PriceRangeStats, MonthlyGrowthStats } from '../../types';
@@ -30,6 +45,53 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { userApartments, loading } = useUserApartments();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+
+  // Cores para os gráficos
+  const COLORS = [
+    '#fc94fc', // Rosa aMORA
+    '#04144c', // Azul escuro
+    '#4caf50', // Verde
+    '#ff9800', // Laranja
+    '#9c27b0', // Roxo
+    '#2196f3', // Azul
+    '#f44336', // Vermelho
+    '#00bcd4', // Ciano
+  ];
+
+  // Função para formatar valores monetários
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  // Função para formatar tooltip
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <Box sx={{
+          bgcolor: 'white',
+          border: '1px solid #ccc',
+          borderRadius: 1,
+          p: 1,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {label}
+          </Typography>
+          {payload.map((entry: any, index: number) => (
+            <Typography key={index} variant="body2" sx={{ color: entry.color }}>
+              {entry.name}: {entry.value}
+            </Typography>
+          ))}
+        </Box>
+      );
+    }
+    return null;
+  };
 
   useEffect(() => {
     if (userApartments.length > 0) {
@@ -151,194 +213,192 @@ const Dashboard: React.FC = () => {
           </Typography>
         </Box>
 
-        {/* Cards de resumo */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ bgcolor: theme.palette.primary.main, color: 'white' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
-                      {stats.totalApartments}
-                    </Typography>
-                    <Typography variant="body2">
-                      Total de Imóveis
-                    </Typography>
-                  </Box>
-                  <HomeIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+                 {/* Cards de resumo */}
+         <Grid container spacing={3} sx={{ mb: 4 }}>
+           <Grid item xs={12} sm={6} md={4}>
+             <Card sx={{ bgcolor: theme.palette.primary.main, color: 'white' }}>
+               <CardContent>
+                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                   <Box>
+                     <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                       {stats.totalApartments}
+                     </Typography>
+                     <Typography variant="body2">
+                       Total de Imóveis
+                     </Typography>
+                   </Box>
+                   <HomeIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+                 </Box>
+               </CardContent>
+             </Card>
+           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ bgcolor: theme.palette.secondary.main, color: 'white' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
-                      {stats.apartmentsByNeighborhood.length}
-                    </Typography>
-                    <Typography variant="body2">
-                      Bairros Atendidos
-                    </Typography>
-                  </Box>
-                  <LocationIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+           <Grid item xs={12} sm={6} md={4}>
+             <Card sx={{ bgcolor: theme.palette.success.main, color: 'white' }}>
+               <CardContent>
+                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                   <Box>
+                     <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                       R$ {(userApartments.reduce((sum, apt) => sum + apt.price, 0) / 1000000).toFixed(1)}M
+                     </Typography>
+                     <Typography variant="body2">
+                       Valor Total
+                     </Typography>
+                   </Box>
+                   <MoneyIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+                 </Box>
+               </CardContent>
+             </Card>
+           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ bgcolor: theme.palette.success.main, color: 'white' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
-                      R$ {(userApartments.reduce((sum, apt) => sum + apt.price, 0) / 1000000).toFixed(1)}M
-                    </Typography>
-                    <Typography variant="body2">
-                      Valor Total
-                    </Typography>
-                  </Box>
-                  <MoneyIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ bgcolor: theme.palette.info.main, color: 'white' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
-                      R$ {(userApartments.reduce((sum, apt) => sum + apt.price, 0) / userApartments.length / 1000).toFixed(0)}k
-                    </Typography>
-                    <Typography variant="body2">
-                      Preço Médio
-                    </Typography>
-                  </Box>
-                  <TrendingUpIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+           <Grid item xs={12} sm={6} md={4}>
+             <Card sx={{ bgcolor: theme.palette.info.main, color: 'white' }}>
+               <CardContent>
+                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                   <Box>
+                     <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
+                       R$ {(userApartments.reduce((sum, apt) => sum + apt.price, 0) / userApartments.length / 1000).toFixed(0)}k
+                     </Typography>
+                     <Typography variant="body2">
+                       Preço Médio
+                     </Typography>
+                   </Box>
+                   <TrendingUpIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+                 </Box>
+               </CardContent>
+             </Card>
+           </Grid>
+         </Grid>
 
         <Divider sx={{ my: 4 }} />
 
-        {/* Estatísticas por bairro */}
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: theme.palette.secondary.main }}>
-          Distribuição por Bairro
-        </Typography>
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {stats.apartmentsByNeighborhood.map((item) => (
-            <Grid item xs={12} sm={6} md={4} key={item.neighborhood}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    {item.neighborhood}
-                  </Typography>
-                  <Typography variant="h4" color="primary" sx={{ fontWeight: 700 }}>
-                    {item.count}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {item.percentage.toFixed(1)}% do total
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+
 
         <Divider sx={{ my: 4 }} />
 
-        {/* Preços por bairro */}
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: theme.palette.secondary.main }}>
+        {/* Gráfico de Barras - Preços por Bairro */}
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: theme.palette.secondary.main, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <BarChartIcon />
           Preços por Bairro
         </Typography>
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {stats.averagePriceByNeighborhood.map((item) => (
-            <Grid item xs={12} sm={6} md={4} key={item.neighborhood}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    {item.neighborhood}
-                  </Typography>
-                  <Typography variant="h5" color="primary" sx={{ fontWeight: 700 }}>
-                    R$ {(item.averagePrice / 1000).toFixed(0)}k
-                  </Typography>
-                  <Box sx={{ mt: 1 }}>
-                    <Typography variant="caption" display="block">
-                      Mín: R$ {(item.minPrice / 1000).toFixed(0)}k
-                    </Typography>
-                    <Typography variant="caption" display="block">
-                      Máx: R$ {(item.maxPrice / 1000).toFixed(0)}k
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+        <Card sx={{ mb: 4 }}>
+          <CardContent>
+            <Box sx={{ height: 400 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={stats.averagePriceByNeighborhood}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="neighborhood" 
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    interval={0}
+                  />
+                  <YAxis 
+                    tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                  />
+                  <Tooltip 
+                    content={<CustomTooltip />}
+                    formatter={(value: number) => [formatCurrency(value), 'Preço Médio']}
+                  />
+                  <Legend />
+                  <Bar 
+                    dataKey="averagePrice" 
+                    fill={theme.palette.primary.main}
+                    name="Preço Médio"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </Box>
+          </CardContent>
+        </Card>
 
         <Divider sx={{ my: 4 }} />
 
-        {/* Faixas de preço */}
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: theme.palette.secondary.main }}>
+        {/* Gráfico de Pizza - Faixas de Preço */}
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: theme.palette.secondary.main, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <PieChartIcon />
           Distribuição por Faixa de Preço
         </Typography>
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {stats.apartmentsByPriceRange.map((item) => (
-            <Grid item xs={12} sm={6} md={4} key={item.range}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    {item.range}
-                  </Typography>
-                  <Typography variant="h4" color="primary" sx={{ fontWeight: 700 }}>
-                    {item.count}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {item.percentage.toFixed(1)}% do total
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+        <Card sx={{ mb: 4 }}>
+          <CardContent>
+            <Box sx={{ height: 400 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={stats.apartmentsByPriceRange}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ range, percentage }) => `${range} (${percentage.toFixed(1)}%)`}
+                    outerRadius={120}
+                    fill="#8884d8"
+                    dataKey="count"
+                  >
+                    {stats.apartmentsByPriceRange.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </Box>
+          </CardContent>
+        </Card>
 
         <Divider sx={{ my: 4 }} />
 
-        {/* Crescimento mensal */}
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: theme.palette.secondary.main }}>
+        {/* Gráfico de Linha - Crescimento Mensal */}
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: theme.palette.secondary.main, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <ShowChartIcon />
           Crescimento Mensal
         </Typography>
-        <Grid container spacing={3}>
-          {stats.monthlyGrowth.map((item) => (
-            <Grid item xs={12} sm={6} md={4} key={item.month}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    {item.month}
-                  </Typography>
-                  <Typography variant="h4" color="success.main" sx={{ fontWeight: 700 }}>
-                    +{item.newApartments}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Total: {item.totalApartments}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+        <Card sx={{ mb: 4 }}>
+          <CardContent>
+            <Box sx={{ height: 400 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={stats.monthlyGrowth}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="newApartments" 
+                    stroke={theme.palette.success.main} 
+                    strokeWidth={3}
+                    name="Novos Imóveis"
+                    dot={{ fill: theme.palette.success.main, strokeWidth: 2, r: 6 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="totalApartments" 
+                    stroke={theme.palette.primary.main} 
+                    strokeWidth={2}
+                    name="Total de Imóveis"
+                    dot={{ fill: theme.palette.primary.main, strokeWidth: 2, r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+          </CardContent>
+        </Card>
 
-        {/* Nota sobre gráficos */}
+        {/* Nota sobre funcionalidades */}
         <Box sx={{ mt: 6, p: 3, bgcolor: theme.palette.grey[50], borderRadius: 2 }}>
           <Typography variant="body2" color="text.secondary" align="center">
-            <strong>Próximas funcionalidades:</strong> Gráficos interativos, filtros avançados, 
+            <strong>Funcionalidades disponíveis:</strong> Gráficos interativos com tooltips, 
+            visualização por pizza e barras, análise de crescimento temporal. 
+            <br />
+            <strong>Próximas funcionalidades:</strong> Filtros avançados, 
             exportação de relatórios e análises comparativas entre períodos.
           </Typography>
         </Box>
