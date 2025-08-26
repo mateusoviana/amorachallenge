@@ -63,6 +63,11 @@ const MatchSwipe: React.FC = () => {
     }
   }, [preferences]);
 
+  // Debug: monitorar mudanças no estado showPreferencesDialog
+  useEffect(() => {
+    console.log('Estado showPreferencesDialog mudou para:', showPreferencesDialog);
+  }, [showPreferencesDialog]);
+
   const loadPreferences = () => {
     const savedPreferences = localStorage.getItem('matchPreferences');
     const setupCompleted = localStorage.getItem('matchSetupCompleted');
@@ -331,23 +336,97 @@ const MatchSwipe: React.FC = () => {
 
   if (currentIndex >= apartments.length) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" gutterBottom>
-            Não há mais imóveis!
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Você viu todos os imóveis disponíveis. Tente ajustar suas preferências.
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          onClick={() => setShowPreferencesDialog(true)}
-          startIcon={<SettingsIcon />}
+      <>
+        <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" gutterBottom>
+              Não há mais imóveis!
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Você viu todos os imóveis disponíveis. Tente ajustar suas preferências.
+            </Typography>
+          </Box>
+          <Button
+            variant="contained"
+            onClick={() => {
+              console.log('Botão Ajustar Preferências clicado!');
+              console.log('Estado atual showPreferencesDialog:', showPreferencesDialog);
+              setShowPreferencesDialog(true);
+              console.log('setShowPreferencesDialog(true) executado');
+            }}
+            startIcon={<SettingsIcon />}
+            sx={{ 
+              fontSize: '1.1rem',
+              py: 1.5,
+              px: 3,
+              borderRadius: 2
+            }}
+          >
+            Ajustar Preferências
+          </Button>
+          
+          {/* Botão de teste */}
+          <Button
+            variant="outlined"
+            onClick={() => {
+              alert('Teste: Estado atual = ' + showPreferencesDialog);
+              setShowPreferencesDialog(true);
+              setTimeout(() => {
+                alert('Após setShowPreferencesDialog(true) = ' + showPreferencesDialog);
+              }, 100);
+            }}
+            sx={{ mt: 2 }}
+          >
+            Teste Simples
+          </Button>
+          
+          {/* Debug visual */}
+          <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1, textAlign: 'center' }}>
+            <Typography variant="caption">
+              Estado showPreferencesDialog: <strong>{showPreferencesDialog.toString()}</strong>
+            </Typography>
+          </Box>
+        </Container>
+
+        {/* Dialog de Preferências - Renderizado aqui também */}
+        <Dialog
+          open={showPreferencesDialog}
+          onClose={() => setShowPreferencesDialog(false)}
+          maxWidth="md"
+          fullWidth
         >
-          Ajustar Preferências
-        </Button>
-      </Container>
+          <DialogTitle>Configurar Preferências</DialogTitle>
+          <DialogContent>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              Deseja ajustar suas preferências? Isso irá recarregar os imóveis disponíveis.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowPreferencesDialog(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => {
+                setShowPreferencesDialog(false);
+                navigate('/match/setup');
+              }}
+              variant="contained"
+            >
+              Configurar
+            </Button>
+            <Button 
+              onClick={() => {
+                setShowPreferencesDialog(false);
+                setCurrentIndex(0);
+                loadApartments();
+              }}
+              variant="outlined"
+            >
+              Recarregar
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
     );
   }
 
