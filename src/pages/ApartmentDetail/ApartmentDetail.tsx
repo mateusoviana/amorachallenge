@@ -378,7 +378,28 @@ const ApartmentDetail: React.FC = () => {
         {/* Coluna Direita - Ações e Informações do Proprietário */}
         <Grid item xs={12} lg={4}>
           {/* Card de Ações */}
-          <Paper sx={{ p: 3, mb: 3, position: 'sticky', top: 24 }}>
+          <Paper sx={{ 
+            p: 3, 
+            mb: 3, 
+            position: 'sticky', 
+            top: 24,
+            backgroundColor: '#ffffff !important',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            border: '1px solid #e0e0e0',
+            zIndex: 10,
+            backdropFilter: 'none',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: '#ffffff',
+              zIndex: -1,
+              borderRadius: 'inherit'
+            }
+          }}>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
               Ações
             </Typography>
@@ -443,7 +464,25 @@ const ApartmentDetail: React.FC = () => {
           </Paper>
 
           {/* Informações do Proprietário */}
-          <Paper sx={{ p: 3, mb: 3 }}>
+          <Paper sx={{ 
+            p: 3, 
+            mb: 3,
+            backgroundColor: '#ffffff !important',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            border: '1px solid #e0e0e0',
+            backdropFilter: 'none',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: '#ffffff',
+              zIndex: -1,
+              borderRadius: 'inherit'
+            }
+          }}>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
               Proprietário
             </Typography>
@@ -487,7 +526,24 @@ const ApartmentDetail: React.FC = () => {
           </Paper>
 
           {/* Informações Adicionais */}
-          <Paper sx={{ p: 3 }}>
+          <Paper sx={{ 
+            p: 3,
+            backgroundColor: '#ffffff !important',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            border: '1px solid #e0e0e0',
+            backdropFilter: 'none',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: '#ffffff',
+              zIndex: -1,
+              borderRadius: 'inherit'
+            }
+          }}>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
               Informações Adicionais
             </Typography>
